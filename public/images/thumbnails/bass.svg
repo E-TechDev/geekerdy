@@ -1,0 +1,5 @@
+<svg width="640" height="360" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="360" fill="#040404" />
+  <path d="M0 250 C160 50 320 450 640 150" fill="none" stroke="#00ff88" stroke-width="18" opacity="0.75" />
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="34" font-family="Arial, Helvetica, sans-serif">Future Bass</text>
+</svg>

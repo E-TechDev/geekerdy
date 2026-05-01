@@ -1,0 +1,12 @@
+<svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff88" />
+      <stop offset="100%" stop-color="#080808" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="800" fill="#020202" />
+  <circle cx="400" cy="400" r="320" fill="url(#grad1)" opacity="0.25" />
+  <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="72" font-family="Arial, Helvetica, sans-serif">6IXTEEN</text>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="42" font-family="Arial, Helvetica, sans-serif">Vibe</text>
+</svg>
