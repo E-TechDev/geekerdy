@@ -25,10 +25,33 @@ const socialLinks = [
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+
+    try {
+      setLoading(true);
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        alert('Message sent successfully!');
+        setFormData({ name: '', email: '', message: '' });
+      } else {
+        alert('Failed to send message.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -102,9 +125,10 @@ export default function ContactPage() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-neon-green text-black py-3 px-6 rounded-lg font-semibold hover:bg-opacity-80 transition-colors"
+                disabled={loading}
+                className="w-full bg-neon-green text-black py-3 px-6 rounded-lg font-semibold hover:bg-opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Send Message
+                {loading ? 'Sending...' : 'Send Message'}
               </button>
             </form>
           </motion.div>
@@ -137,7 +161,7 @@ export default function ContactPage() {
                   <FaEnvelope size={24} className="text-blue-500" />
                   <div>
                     <div className="font-semibold">Email</div>
-                    <div className="text-gray-400">booking@geekerdy.com</div>
+                    <div className="text-gray-400">geekerdymanagement@gmail.com</div>
                   </div>
                 </a>
               </div>

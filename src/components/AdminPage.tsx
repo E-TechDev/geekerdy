@@ -14,6 +14,7 @@ export default function AdminPage() {
   const [attempts, setAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState('');
+  const [activeSection, setActiveSection] = useState('dashboard');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -211,14 +212,80 @@ export default function AdminPage() {
             >
               Reset Analytics
             </button>
-            <button className="bg-neon-green text-black px-4 py-2 rounded-lg hover:bg-opacity-80 transition-colors">
+
+            <button
+              onClick={() => setActiveSection('releases')}
+              className="bg-neon-green text-black px-4 py-2 rounded-lg hover:bg-opacity-80 transition-colors"
+            >
               Update Releases
             </button>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+
+            <button
+              onClick={() => setActiveSection('events')}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
               Manage Events
+            </button>
+
+            <button
+              onClick={() => setActiveSection('gallery')}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Update Gallery
+            </button>
+
+            <button
+              onClick={() => setActiveSection('videos')}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+            >
+              Manage Videos
+            </button>
+
+            <button
+              onClick={() => setActiveSection('music')}
+              className="bg-green-500 text-black px-4 py-2 rounded-lg hover:bg-green-400 transition-colors"
+            >
+              Manage Music
             </button>
           </div>
         </motion.div>
+
+        <div className="mt-8">
+          {activeSection === 'releases' && (
+            <div className="bg-gray-900 p-6 rounded-lg">
+              <h3 className="text-xl font-bold mb-4">Manage Releases</h3>
+              <p>Add/edit music releases, announcements and streaming links.</p>
+            </div>
+          )}
+
+          {activeSection === 'events' && (
+            <div className="bg-gray-900 p-6 rounded-lg">
+              <h3 className="text-xl font-bold mb-4">Manage Events</h3>
+              <p>Add upcoming shows, dates, venues and countdown timers.</p>
+            </div>
+          )}
+
+          {activeSection === 'gallery' && (
+            <div className="bg-gray-900 p-6 rounded-lg">
+              <h3 className="text-xl font-bold mb-4">Gallery Manager</h3>
+              <p>Upload/update artist images.</p>
+            </div>
+          )}
+
+          {activeSection === 'videos' && (
+            <div className="bg-gray-900 p-6 rounded-lg">
+              <h3 className="text-xl font-bold mb-4">Video Manager</h3>
+              <p>Add YouTube video links.</p>
+            </div>
+          )}
+
+          {activeSection === 'music' && (
+            <div className="bg-gray-900 p-6 rounded-lg">
+              <h3 className="text-xl font-bold mb-4">Music Manager</h3>
+              <p>Add Spotify/Boomplay tracks and release info.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { trackClick } from '@/lib/analytics';
-import { homeSpotifyLink, homeBoomplayLink } from '@/lib/env';
+import { homeSpotifyLink, homeBoomplayLink, homeSpotifyEmbed, homeYoutubeEmbed } from '@/lib/env';
 
 const heroDots = Array.from({ length: 30 }, () => ({
   x: Math.floor(Math.random() * 1200) + 100,
@@ -120,7 +120,7 @@ export default function HomePage() {
             <h2 className="text-4xl font-bold mb-8 text-center">Featured on Spotify</h2>
             <div className="flex justify-center">
               <iframe
-                src="https://open.spotify.com/embed/artist/4gzpq5DPGxSnKTe4SA8HAU?utm_source=generator"
+                src={homeSpotifyEmbed}
                 width="100%"
                 height="352"
                 frameBorder="0"
@@ -142,7 +142,7 @@ export default function HomePage() {
               <iframe
                 width="100%"
                 height="400"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                src={homeYoutubeEmbed}
                 title="Featured Video"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

@@ -1,9 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import { songs } from '@/data/songs';
-import { FaSpotify, FaPlay } from 'react-icons/fa';
+import { FaPlay, FaPause } from 'react-icons/fa';
 import { trackClick } from '@/lib/analytics';
 
 const albums = [
@@ -26,6 +26,7 @@ const albums = [
 
 export default function MusicPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedSong, setExpandedSong] = useState<string | null>(null);
 
   const filteredSongs = useMemo(
     () => songs.filter((song) => song.title.toLowerCase().includes(searchQuery.toLowerCase())),
@@ -111,27 +112,38 @@ export default function MusicPage() {
               <div className="p-6">
                 <h3 className="text-xl font-semibold mb-2">{song.title}</h3>
                 <p className="text-gray-400 mb-4">{song.duration}</p>
-                <div className="flex gap-3">
-                  <a
-                    href={song.spotifyLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 bg-green-600 text-white py-2 px-4 rounded-full text-center hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                    onClick={() => trackClick('spotify')}
-                  >
-                    <FaSpotify /> Spotify
-                  </a>
-                  <a
-                    href={song.boomplayLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-full text-center hover:bg-orange-700 transition-colors"
-                    onClick={() => trackClick('boomplay')}
-                  >
-                    Boomplay
-                  </a>
-                </div>
+                <button
+                  onClick={() => setExpandedSong(expandedSong === song.id ? null : song.id)}
+                  className="w-full bg-neon-green text-black py-2 px-4 rounded-full font-semibold hover:bg-opacity-80 transition-colors flex items-center justify-center gap-2"
+                >
+                  {expandedSong === song.id ? <FaPause /> : <FaPlay />}
+                  {expandedSong === song.id ? 'Close Player' : 'Play Now'}
+                </button>
               </div>
+
+              <AnimatePresence>
+                {expandedSong === song.id && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-6 pt-0">
+                      <iframe
+                        src={song.embedUrl}
+                        width="100%"
+                        height={song.platform === 'spotify' ? '152' : song.platform === 'boomplay' ? '180' : '315'}
+                        frameBorder="0"
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                        className="rounded-lg"
+                      ></iframe>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           ))}
         </div>

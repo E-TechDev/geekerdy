@@ -3,8 +3,8 @@ export interface Song {
   title: string;
   duration: string;
   cover: string;
-  spotifyLink: string;
-  boomplayLink: string;
+  embedUrl: string;
+  platform: 'spotify' | 'boomplay' | 'youtube';
   releaseDate: string;
 }
 
@@ -14,8 +14,8 @@ export const songs: Song[] = [
     title: '6IXTEEN Vibe',
     duration: '3:24',
     cover: '/images/covers/vibe.svg',
-    spotifyLink: 'https://open.spotify.com/track/example1',
-    boomplayLink: 'https://www.boomplay.com/share/track/example1',
+    embedUrl: 'https://open.spotify.com/embed/track/example1',
+    platform: 'spotify',
     releaseDate: '2024-01-15',
   },
   {
@@ -23,8 +23,8 @@ export const songs: Song[] = [
     title: 'Neon Dreams',
     duration: '4:12',
     cover: '/images/covers/dreams.svg',
-    spotifyLink: 'https://open.spotify.com/track/example2',
-    boomplayLink: 'https://www.boomplay.com/share/track/example2',
+    embedUrl: 'https://open.spotify.com/embed/track/example2',
+    platform: 'spotify',
     releaseDate: '2024-02-20',
   },
   {
@@ -32,8 +32,8 @@ export const songs: Song[] = [
     title: 'Future Bass',
     duration: '3:45',
     cover: '/images/covers/bass.svg',
-    spotifyLink: 'https://open.spotify.com/track/example3',
-    boomplayLink: 'https://www.boomplay.com/share/track/example3',
+    embedUrl: 'https://open.spotify.com/embed/track/example3',
+    platform: 'spotify',
     releaseDate: '2024-03-10',
   },
   // Add more songs...

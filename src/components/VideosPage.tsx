@@ -1,9 +1,29 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
 import { videos } from '@/data/videos';
 
+const categories = [
+  { id: 'all', label: 'All' },
+  { id: 'music-videos', label: 'Music Videos' },
+  { id: 'live-performances', label: 'Live Performances' },
+  { id: 'freestyles', label: 'Freestyles' },
+  { id: 'behind-scenes', label: 'Behind The Scenes' },
+];
+
 export default function VideosPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+  const filteredVideos = useMemo(() => {
+    return videos.filter((video) => {
+      const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || video.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [searchQuery, selectedCategory]);
+
   return (
     <div className="min-h-screen bg-black text-white py-20 px-4">
       <div className="max-w-7xl mx-auto">
@@ -17,7 +37,7 @@ export default function VideosPage() {
         </motion.h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {videos.map((video, index) => (
+          {filteredVideos.map((video, index) => (
             <motion.div
               key={video.id}
               initial={{ opacity: 0, y: 50 }}
@@ -29,7 +49,7 @@ export default function VideosPage() {
                 <iframe
                   width="100%"
                   height="200"
-                  src={`https://www.youtube.com/embed/${video.youtubeId}`}
+                  src={video.embedUrl}
                   title={video.title}
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

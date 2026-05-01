@@ -13,6 +13,9 @@ export const socialFacebook = process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK || 'https:
 export const homeSpotifyLink = process.env.NEXT_PUBLIC_HOME_SPOTIFY_LINK || 'https://open.spotify.com/artist/4gzpq5DPGxSnKTe4SA8HAU';
 export const homeBoomplayLink = process.env.NEXT_PUBLIC_HOME_BOOMPLAY_LINK || 'https://www.boomplay.com/';
 
+export const homeSpotifyEmbed = process.env.NEXT_PUBLIC_HOME_SPOTIFY_EMBED || 'https://open.spotify.com/embed/artist/61TkjtciQq12rl1IeIS2EH?utm_source=generator';
+export const homeYoutubeEmbed = process.env.NEXT_PUBLIC_HOME_YOUTUBE_EMBED || 'https://www.youtube.com/embed/lPfn8PTZM-g?si=dpavB4J5PYm4pHeV';
+
 export const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '';
 export const adminLockAttempts = Number(process.env.NEXT_PUBLIC_ADMIN_LOCK_ATTEMPTS || '3');
 export const adminLockMinutes = Number(process.env.NEXT_PUBLIC_ADMIN_LOCK_MINUTES || '10');
