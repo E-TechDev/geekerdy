@@ -1,8 +1,17 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useMemo, useState } from 'react';
-import { videos } from '@/data/videos';
+import { useEffect, useMemo, useState } from 'react';
+import { client } from '@/lib/sanity';
+
+interface VideoItem {
+  _id: string;
+  title: string;
+  embedUrl: string;
+  platform: string;
+  uploadDate: string;
+  featured: boolean;
+}
 
 const categories = [
   { id: 'all', label: 'All' },
@@ -15,14 +24,31 @@ const categories = [
 export default function VideosPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [videoItems, setVideoItems] = useState<VideoItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const data = await client.fetch('*[_type == "video"] | order(uploadDate desc)');
+        setVideoItems(data);
+      } catch (error) {
+        console.error('Error fetching videos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideos();
+  }, []);
 
   const filteredVideos = useMemo(() => {
-    return videos.filter((video) => {
+    return videoItems.filter((video) => {
       const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || video.category === selectedCategory;
+      const matchesCategory = selectedCategory === 'all';
       return matchesSearch && matchesCategory;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [videoItems, searchQuery, selectedCategory]);
 
   return (
     <div className="min-h-screen bg-black text-white py-20 px-4">
@@ -37,32 +63,43 @@ export default function VideosPage() {
         </motion.h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredVideos.map((video, index) => (
-            <motion.div
-              key={video.id}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: index * 0.1 }}
-              className="bg-gray-900 rounded-lg overflow-hidden hover:scale-105 transition-transform duration-300"
-            >
-              <div className="relative">
-                <iframe
-                  width="100%"
-                  height="200"
-                  src={video.embedUrl}
-                  title={video.title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="rounded-t-lg"
-                ></iframe>
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-semibold mb-2">{video.title}</h3>
-                <p className="text-gray-400">{video.duration}</p>
-              </div>
-            </motion.div>
-          ))}
+          {loading ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-400">Loading videos...</p>
+            </div>
+          ) : filteredVideos.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-400">No videos found matching your search.</p>
+            </div>
+          ) : (
+            filteredVideos.map((video, index) => (
+              <motion.div
+                key={video._id}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: index * 0.1 }}
+                className="bg-gray-900 rounded-lg overflow-hidden hover:scale-105 transition-transform duration-300"
+              >
+                <div className="relative">
+                  <iframe
+                    width="100%"
+                    height="200"
+                    src={video.embedUrl}
+                    title={video.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="rounded-t-lg"
+                  ></iframe>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold mb-2">{video.title}</h3>
+                  <p className="text-gray-400">{video.platform}</p>
+                  <p className="text-sm text-gray-500">{new Date(video.uploadDate).toLocaleDateString()}</p>
+                </div>
+              </motion.div>
+            ))
+          )}
         </div>
       </div>
     </div>
