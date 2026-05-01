@@ -9,6 +9,7 @@ interface VideoItem {
   title: string;
   embedUrl: string;
   platform: string;
+  category: string;
   uploadDate: string;
   featured: boolean;
 }
@@ -45,7 +46,7 @@ export default function VideosPage() {
   const filteredVideos = useMemo(() => {
     return videoItems.filter((video) => {
       const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all';
+      const matchesCategory = selectedCategory === 'all' || video.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
   }, [videoItems, searchQuery, selectedCategory]);
@@ -61,6 +62,30 @@ export default function VideosPage() {
         >
           Videos
         </motion.h1>
+
+        <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-3xl font-semibold mb-2">Explore the catalog</h2>
+            <p className="text-gray-400 max-w-2xl">Search your video library and filter by category.</p>
+          </div>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search videos"
+              className="w-full md:w-80 bg-gray-900 border border-gray-700 rounded-full px-5 py-3 focus:outline-none focus:border-neon-green"
+            />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full md:w-64 bg-gray-900 border border-gray-700 rounded-full px-5 py-3 focus:outline-none focus:border-neon-green"
+            >
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>{category.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {loading ? (

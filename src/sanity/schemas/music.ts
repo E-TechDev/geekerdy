@@ -18,16 +18,26 @@ export const musicSchema = defineType({
       validation: Rule => Rule.required(),
     }),
     defineField({
-      name: 'cover',
+      name: 'artist',
+      title: 'Artist',
+      type: 'string',
+      validation: Rule => Rule.required(),
+    }),
+    defineField({
+      name: 'coverImage',
       title: 'Cover Image URL',
       type: 'url',
-      validation: Rule => Rule.required(),
     }),
     defineField({
       name: 'embedUrl',
       title: 'Embed URL',
       type: 'url',
       validation: Rule => Rule.required(),
+    }),
+    defineField({
+      name: 'link',
+      title: 'Link URL',
+      type: 'url',
     }),
     defineField({
       name: 'platform',
@@ -38,6 +48,7 @@ export const musicSchema = defineType({
           { title: 'Spotify', value: 'spotify' },
           { title: 'Boomplay', value: 'boomplay' },
           { title: 'YouTube', value: 'youtube' },
+          { title: 'Vimeo', value: 'vimeo' },
         ],
       },
       validation: Rule => Rule.required(),

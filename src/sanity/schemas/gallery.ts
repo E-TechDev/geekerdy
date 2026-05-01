@@ -18,6 +18,11 @@ export const gallerySchema = defineType({
       validation: Rule => Rule.required(),
     }),
     defineField({
+      name: 'link',
+      title: 'Link URL',
+      type: 'url',
+    }),
+    defineField({
       name: 'caption',
       title: 'Caption',
       type: 'text',

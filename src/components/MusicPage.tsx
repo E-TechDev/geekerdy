@@ -10,29 +10,13 @@ interface MusicItem {
   _id: string;
   title: string;
   artist: string;
+  duration: string;
+  coverImage?: string;
   embedUrl: string;
   platform: string;
   releaseDate: string;
   featured: boolean;
 }
-
-const albums = [
-  {
-    title: '6IXTEEN FLAVOUR',
-    subtitle: 'The debut EP',
-    hero: '/images/covers/vibe.svg',
-  },
-  {
-    title: 'Neon Dreams',
-    subtitle: 'Single Collection',
-    hero: '/images/covers/dreams.svg',
-  },
-  {
-    title: 'Future Bass',
-    subtitle: 'Extended play',
-    hero: '/images/covers/bass.svg',
-  },
-];
 
 export default function MusicPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,33 +73,6 @@ export default function MusicPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto mb-16">
-          <div className="flex gap-6 min-w-[900px]">
-            {albums.map((album, index) => (
-              <motion.div
-                key={album.title}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                className="bg-gray-900 rounded-3xl overflow-hidden min-w-[280px] shadow-glow"
-              >
-                <div className="h-64 overflow-hidden">
-                  <img
-                    src={album.hero}
-                    alt={album.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-2xl font-semibold mb-2">{album.title}</h3>
-                  <p className="text-gray-400">{album.subtitle}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {loading ? (
             <div className="col-span-full text-center py-12">
@@ -135,11 +92,20 @@ export default function MusicPage() {
                 className="bg-gray-900 rounded-lg overflow-hidden hover:scale-105 transition-transform duration-300"
               >
                 <div className="relative">
-                  <div className="w-full h-48 bg-gray-800 flex items-center justify-center">
-                    <div className="text-6xl opacity-20">
-                      {song.platform === 'Spotify' ? '🎵' : song.platform === 'Boomplay' ? '🎶' : '▶️'}
+                  {song.coverImage ? (
+                    <img
+                      src={song.coverImage}
+                      alt={song.title}
+                      className="w-full h-48 object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gray-800 flex items-center justify-center">
+                      <div className="text-6xl opacity-20">
+                        {song.platform.toLowerCase() === 'spotify' ? '🎵' : song.platform.toLowerCase() === 'boomplay' ? '🎶' : '▶️'}
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
                     <FaPlay size={48} className="text-neon-green" />
                   </div>

@@ -24,9 +24,26 @@ export const videoSchema = defineType({
       validation: Rule => Rule.required(),
     }),
     defineField({
+      name: 'link',
+      title: 'Link URL',
+      type: 'url',
+    }),
+    defineField({
       name: 'thumbnail',
       title: 'Thumbnail URL',
       type: 'url',
+    }),
+    defineField({
+      name: 'platform',
+      title: 'Platform',
+      type: 'string',
+      options: {
+        list: [
+          { title: 'YouTube', value: 'YouTube' },
+          { title: 'Vimeo', value: 'Vimeo' },
+          { title: 'Other', value: 'Other' },
+        ],
+      },
     }),
     defineField({
       name: 'category',

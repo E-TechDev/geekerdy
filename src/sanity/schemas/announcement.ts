@@ -23,6 +23,11 @@ export const announcementSchema = defineType({
       type: 'url',
     }),
     defineField({
+      name: 'mediaUrl',
+      title: 'Media URL',
+      type: 'url',
+    }),
+    defineField({
       name: 'embedUrl',
       title: 'Embed URL',
       type: 'url',
