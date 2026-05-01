@@ -57,7 +57,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 border-t border-gray-800 pt-6 text-center text-sm text-gray-500">
-          © {new Date().getFullYear()} Gee Kerdy. All rights reserved.
+          © {new Date().getFullYear()} Gee Kerdy. All rights reserved. Developed by JayB.
         </div>
       </div>
     </footer>
