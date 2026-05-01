@@ -137,7 +137,7 @@ export default function ContactPage() {
                   <FaEnvelope size={24} className="text-blue-500" />
                   <div>
                     <div className="font-semibold">Email</div>
-                    <div className="text-gray-400">booking@geekerdy.com</div>
+                    <div className="text-gray-400">geekerdymanagement@gmail.com</div>
                   </div>
                 </a>
               </div>
