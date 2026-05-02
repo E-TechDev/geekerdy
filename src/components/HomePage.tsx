@@ -69,17 +69,16 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!featuredAnnouncement || !featuredAnnouncement.showCountdown || !featuredAnnouncement.expiresAt) {
-      setAnnouncementCountdown('');
-      return;
-    }
-
-    const expiresAt = featuredAnnouncement.expiresAt;
     const updateCountdown = () => {
-      const expires = new Date(expiresAt).getTime();
+      if (!featuredAnnouncement || !featuredAnnouncement.showCountdown || !featuredAnnouncement.expiresAt) {
+        window.setTimeout(() => setAnnouncementCountdown(''), 0);
+        return;
+      }
+
+      const expires = new Date(featuredAnnouncement.expiresAt).getTime();
       const diff = expires - Date.now();
       if (diff <= 0) {
-        setAnnouncementCountdown('Expired');
+        window.setTimeout(() => setAnnouncementCountdown('Expired'), 0);
         return;
       }
 
@@ -87,7 +86,7 @@ export default function HomePage() {
       const hours = Math.floor((diff % 86400000) / 3600000);
       const minutes = Math.floor((diff % 3600000) / 60000);
       const seconds = Math.floor((diff % 60000) / 1000);
-      setAnnouncementCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+      window.setTimeout(() => setAnnouncementCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`), 0);
     };
 
     updateCountdown();

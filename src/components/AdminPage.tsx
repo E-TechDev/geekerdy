@@ -3,7 +3,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { motion } from 'framer-motion';
-import { useEffect, useState, useCallback, type ChangeEvent } from 'react';
+import { useEffect, useState, useCallback, type ChangeEvent, type Dispatch, type SetStateAction } from 'react';
 import { getClickData, resetClickData, loadClickData } from '@/lib/analytics';
 import { adminPassword, adminLockAttempts, adminLockMinutes } from '@/lib/env';
 import { client, writeClient } from '@/lib/sanity';
@@ -140,17 +140,17 @@ export default function AdminPage() {
     return undefined;
   };
 
-  const uploadAndSetField = async (
+  const uploadAndSetField = async <T extends object>(
     event: ChangeEvent<HTMLInputElement>,
-    currentItem: Record<string, any>,
-    setItem: any,
-    fieldName: string
+    currentItem: T | null,
+    setItem: Dispatch<SetStateAction<T | null>>,
+    fieldName: keyof T
   ) => {
     const file = event.target.files?.[0];
     if (!file || !currentItem) return;
     const url = await uploadImageAsset(file);
     if (url) {
-      setItem({ ...currentItem, [fieldName]: url });
+      setItem({ ...currentItem, [fieldName]: url } as T);
     }
   };
 
