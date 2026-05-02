@@ -44,22 +44,22 @@ const heroDots = Array.from({ length: 30 }, () => ({
 export default function HomePage() {
   const [featuredMusic, setFeaturedMusic] = useState<FeaturedMusic | null>(null);
   const [featuredVideo, setFeaturedVideo] = useState<FeaturedVideo | null>(null);
-  const [featuredAnnouncement, setFeaturedAnnouncement] = useState<FeaturedAnnouncement | null>(null);
-  const [announcementCountdown, setAnnouncementCountdown] = useState('');
+  const [announcements, setAnnouncements] = useState<FeaturedAnnouncement[]>([]);
+  const [announcementCountdowns, setAnnouncementCountdowns] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchFeaturedContent = async () => {
       try {
-        const [latestMusic, videoData, announcementData] = await Promise.all([
+        const [latestMusic, videoData, allAnnouncements] = await Promise.all([
           client.fetch('*[_type == "music" && latestRelease == true] | order(releaseDate desc)[0]'),
           client.fetch('*[_type == "video" && featured == true] | order(uploadDate desc)[0]'),
-          client.fetch('*[_type == "announcement" && featured == true && (!defined(expiresAt) || expiresAt > now())] | order(_createdAt desc)[0]'),
+          client.fetch('*[_type == "announcement" && (!defined(expiresAt) || expiresAt > now())] | order(_createdAt desc)'),
         ]);
 
         const musicData = latestMusic || await client.fetch('*[_type == "music" && featured == true] | order(releaseDate desc)[0]');
         setFeaturedMusic(musicData);
         setFeaturedVideo(videoData);
-        setFeaturedAnnouncement(announcementData);
+        setAnnouncements(allAnnouncements);
       } catch (error) {
         console.error('Error fetching featured content:', error);
       }
@@ -69,30 +69,30 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const updateCountdown = () => {
-      if (!featuredAnnouncement || !featuredAnnouncement.showCountdown || !featuredAnnouncement.expiresAt) {
-        window.setTimeout(() => setAnnouncementCountdown(''), 0);
-        return;
-      }
-
-      const expires = new Date(featuredAnnouncement.expiresAt).getTime();
-      const diff = expires - Date.now();
-      if (diff <= 0) {
-        window.setTimeout(() => setAnnouncementCountdown('Expired'), 0);
-        return;
-      }
-
-      const days = Math.floor(diff / 86400000);
-      const hours = Math.floor((diff % 86400000) / 3600000);
-      const minutes = Math.floor((diff % 3600000) / 60000);
-      const seconds = Math.floor((diff % 60000) / 1000);
-      window.setTimeout(() => setAnnouncementCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`), 0);
+    const updateCountdowns = () => {
+      const newCountdowns: Record<string, string> = {};
+      announcements.forEach((announcement) => {
+        if (announcement.showCountdown && announcement.expiresAt) {
+          const expires = new Date(announcement.expiresAt).getTime();
+          const diff = expires - Date.now();
+          if (diff <= 0) {
+            newCountdowns[announcement._id] = 'Expired';
+          } else {
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff % 86400000) / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            newCountdowns[announcement._id] = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+          }
+        }
+      });
+      window.setTimeout(() => setAnnouncementCountdowns(newCountdowns), 0);
     };
 
-    updateCountdown();
-    const interval = window.setInterval(updateCountdown, 1000);
+    updateCountdowns();
+    const interval = window.setInterval(updateCountdowns, 1000);
     return () => window.clearInterval(interval);
-  }, [featuredAnnouncement]);
+  }, [announcements]);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -274,45 +274,36 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {featuredAnnouncement && (
+          {announcements.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
               className="mb-16"
             >
-              <h2 className="text-4xl font-bold mb-8 text-center">Latest News</h2>
-              <div className="bg-gray-900 rounded-lg p-8 text-center max-w-4xl mx-auto">
-                <h3 className="text-2xl font-semibold mb-4">{featuredAnnouncement.title}</h3>
-                <p className="text-gray-300 mb-4">{featuredAnnouncement.message}</p>
-                {featuredAnnouncement.showCountdown && announcementCountdown && (
-                  <p className="text-neon-green font-semibold mb-4">Countdown: {announcementCountdown}</p>
-                )}
-                <div className="flex justify-center gap-4 flex-wrap">
-                  {featuredAnnouncement.link && (
-                    <a
-                      href={featuredAnnouncement.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-neon-green text-black px-6 py-2 rounded-full font-semibold hover:bg-opacity-80 transition-colors"
-                    >
-                      Learn More
-                    </a>
-                  )}
-                  {featuredAnnouncement.embedUrl && (
-                    <div className="w-full mt-6">
-                      <iframe
-                        src={featuredAnnouncement.embedUrl}
-                        width="100%"
-                        height="200"
-                        frameBorder="0"
-                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                        loading="lazy"
-                        className="rounded-lg"
-                      ></iframe>
+              <h2 className="text-4xl font-bold mb-8 text-center">Announcements</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {announcements.map((announcement) => (
+                  <div key={announcement._id} className="bg-gray-900 rounded-lg p-6 text-center">
+                    <h3 className="text-xl font-semibold mb-4">{announcement.title}</h3>
+                    <p className="text-gray-300 mb-4">{announcement.message}</p>
+                    {announcement.showCountdown && announcementCountdowns[announcement._id] && (
+                      <p className="text-neon-green font-semibold mb-4">Countdown: {announcementCountdowns[announcement._id]}</p>
+                    )}
+                    <div className="flex justify-center gap-4 flex-wrap">
+                      {announcement.link && (
+                        <a
+                          href={announcement.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-neon-green text-black px-4 py-2 rounded-full font-semibold hover:bg-opacity-80 transition-colors"
+                        >
+                          Learn More
+                        </a>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
             </motion.div>
           )}

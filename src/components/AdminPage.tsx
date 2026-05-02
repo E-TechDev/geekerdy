@@ -820,7 +820,6 @@ export default function AdminPage() {
                       value={editingMusic.embedUrl}
                       onChange={(e) => setEditingMusic({ ...editingMusic, embedUrl: e.target.value })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
-                      required
                     />
                     <input
                       type="url"
@@ -1171,7 +1170,6 @@ export default function AdminPage() {
                       value={editingVideo.embedUrl}
                       onChange={(e) => setEditingVideo({ ...editingVideo, embedUrl: e.target.value })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
-                      required
                     />
                     <input
                       type="url"
