@@ -21,6 +21,7 @@ interface MusicItem {
   platform: 'spotify' | 'boomplay' | 'youtube' | 'vimeo' | string;
   releaseDate: string;
   featured: boolean;
+  latestRelease?: boolean;
 }
 
 interface VideoItem {
@@ -34,6 +35,7 @@ interface VideoItem {
   category: string;
   uploadDate: string;
   featured: boolean;
+  latestRelease?: boolean;
 }
 
 interface GalleryItem {
@@ -64,7 +66,8 @@ interface AnnouncementItem {
   link?: string;
   embedUrl?: string;
   mediaUrl?: string;
-  expiresAt: string;
+  expiresAt?: string;
+  showCountdown?: boolean;
   featured: boolean;
 }
 
@@ -93,6 +96,7 @@ export default function AdminPage() {
   const [editingAnnouncement, setEditingAnnouncement] = useState<AnnouncementItem | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const showStatus = (message: string, type: 'success' | 'error') => {
     setStatusMessage(message);
@@ -104,11 +108,22 @@ export default function AdminPage() {
     setStatusType('');
   };
 
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return 'Unknown error';
+    }
+  };
+
   const uploadImageAsset = async (file?: File): Promise<string | undefined> => {
     if (!file) return undefined;
 
     try {
       setLoading(true);
+      setActionLoading('Uploading...');
       const asset = await writeClient.assets.upload('image', file, { filename: file.name });
       if (asset && typeof asset.url === 'string') {
         showStatus('Upload completed successfully.', 'success');
@@ -116,9 +131,10 @@ export default function AdminPage() {
       }
     } catch (uploadError) {
       console.error('Error uploading asset:', uploadError);
-      showStatus('Image upload failed. Ensure your Sanity API token is configured.', 'error');
+      showStatus(`Image upload failed: ${getErrorMessage(uploadError)}`, 'error');
     } finally {
       setLoading(false);
+      setActionLoading(null);
     }
 
     return undefined;
@@ -187,13 +203,22 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!statusMessage) return;
-    const timer = window.setTimeout(clearStatus, 6000);
+    const timer = window.setTimeout(clearStatus, 4000);
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
 
   const saveLockState = (nextAttempts: number, nextLockUntil: number | null) => {
     const payload = JSON.stringify({ attempts: nextAttempts, lockUntil: nextLockUntil });
     localStorage.setItem(ADMIN_LOCK_STATE_KEY, payload);
+  };
+
+  const unsetPreviousLatest = async (schemaType: string, preserveId?: string) => {
+    try {
+      const existingIds: string[] = await client.fetch(`*[_type == "${schemaType}" && latestRelease == true${preserveId ? ' && _id != $preserveId' : ''}]._id`, { preserveId });
+      await Promise.all(existingIds.map((id) => writeClient.patch(id).set({ latestRelease: false }).commit()));
+    } catch (error) {
+      console.error('Error unsetting previous latest release:', error);
+    }
   };
 
   // Fetch data functions
@@ -250,8 +275,12 @@ export default function AdminPage() {
   // CRUD operations
   const saveMusic = async (item: MusicItem) => {
     setLoading(true);
+    setActionLoading(item._id ? 'Updating music...' : 'Saving music...');
     try {
       const { _id, ...payload } = item;
+      if (payload.latestRelease) {
+        await unsetPreviousLatest('music', _id);
+      }
       if (_id) {
         await writeClient.patch(_id).set(payload).commit();
         showStatus('Music release updated successfully.', 'success');
@@ -263,31 +292,38 @@ export default function AdminPage() {
       setEditingMusic(null);
     } catch (error) {
       console.error('Error saving music:', error);
-      showStatus('Unable to save music release. Check your token and permissions.', 'error');
+      showStatus(`Failed to save music release: ${getErrorMessage(error)}`, 'error');
     } finally {
       setLoading(false);
+      setActionLoading(null);
     }
   };
 
   const deleteMusic = async (id: string) => {
     if (!confirm('Are you sure you want to delete this music item?')) return;
     setLoading(true);
+    setActionLoading('Deleting music...');
     try {
       await writeClient.delete(id);
       await fetchMusic();
       showStatus('Music release deleted successfully.', 'success');
     } catch (error) {
       console.error('Error deleting music:', error);
-      showStatus('Unable to delete music release.', 'error');
+      showStatus(`Failed to delete music release: ${getErrorMessage(error)}`, 'error');
     } finally {
       setLoading(false);
+      setActionLoading(null);
     }
   };
 
   const saveVideo = async (item: VideoItem) => {
     setLoading(true);
+    setActionLoading(item._id ? 'Updating video...' : 'Saving video...');
     try {
       const { _id, ...payload } = item;
+      if (payload.latestRelease) {
+        await unsetPreviousLatest('video', _id);
+      }
       if (_id) {
         await writeClient.patch(_id).set(payload).commit();
         showStatus('Video updated successfully.', 'success');
@@ -299,29 +335,33 @@ export default function AdminPage() {
       setEditingVideo(null);
     } catch (error) {
       console.error('Error saving video:', error);
-      showStatus('Unable to save video.', 'error');
+      showStatus(`Failed to save video: ${getErrorMessage(error)}`, 'error');
     } finally {
       setLoading(false);
+      setActionLoading(null);
     }
   };
 
   const deleteVideo = async (id: string) => {
     if (!confirm('Are you sure you want to delete this video?')) return;
     setLoading(true);
+    setActionLoading('Deleting video...');
     try {
       await writeClient.delete(id);
       await fetchVideos();
       showStatus('Video deleted successfully.', 'success');
     } catch (error) {
       console.error('Error deleting video:', error);
-      showStatus('Unable to delete video.', 'error');
+      showStatus(`Failed to delete video: ${getErrorMessage(error)}`, 'error');
     } finally {
       setLoading(false);
+      setActionLoading(null);
     }
   };
 
   const saveGallery = async (item: GalleryItem) => {
     setLoading(true);
+    setActionLoading(item._id ? 'Updating gallery...' : 'Saving gallery...');
     try {
       const { _id, ...payload } = item;
       if (_id) {
@@ -335,29 +375,33 @@ export default function AdminPage() {
       setEditingGallery(null);
     } catch (error) {
       console.error('Error saving gallery:', error);
-      showStatus('Unable to save gallery item.', 'error');
+      showStatus(`Failed to save gallery item: ${getErrorMessage(error)}`, 'error');
     } finally {
       setLoading(false);
+      setActionLoading(null);
     }
   };
 
   const deleteGallery = async (id: string) => {
     if (!confirm('Are you sure you want to delete this gallery item?')) return;
     setLoading(true);
+    setActionLoading('Deleting gallery item...');
     try {
       await writeClient.delete(id);
       await fetchGallery();
       showStatus('Gallery item deleted successfully.', 'success');
     } catch (error) {
       console.error('Error deleting gallery:', error);
-      showStatus('Unable to delete gallery item.', 'error');
+      showStatus(`Failed to delete gallery item: ${getErrorMessage(error)}`, 'error');
     } finally {
       setLoading(false);
+      setActionLoading(null);
     }
   };
 
   const saveEvent = async (item: EventItem) => {
     setLoading(true);
+    setActionLoading(item._id ? 'Updating event...' : 'Saving event...');
     try {
       const { _id, ...payload } = item;
       if (_id) {
@@ -371,29 +415,33 @@ export default function AdminPage() {
       setEditingEvent(null);
     } catch (error) {
       console.error('Error saving event:', error);
-      showStatus('Unable to save event.', 'error');
+      showStatus(`Failed to save event: ${getErrorMessage(error)}`, 'error');
     } finally {
       setLoading(false);
+      setActionLoading(null);
     }
   };
 
   const deleteEvent = async (id: string) => {
     if (!confirm('Are you sure you want to delete this event?')) return;
     setLoading(true);
+    setActionLoading('Deleting event...');
     try {
       await writeClient.delete(id);
       await fetchEvents();
       showStatus('Event deleted successfully.', 'success');
     } catch (error) {
       console.error('Error deleting event:', error);
-      showStatus('Unable to delete event.', 'error');
+      showStatus(`Failed to delete event: ${getErrorMessage(error)}`, 'error');
     } finally {
       setLoading(false);
+      setActionLoading(null);
     }
   };
 
   const saveAnnouncement = async (item: AnnouncementItem) => {
     setLoading(true);
+    setActionLoading(item._id ? 'Updating announcement...' : 'Saving announcement...');
     try {
       const { _id, ...payload } = item;
       if (_id) {
@@ -407,24 +455,42 @@ export default function AdminPage() {
       setEditingAnnouncement(null);
     } catch (error) {
       console.error('Error saving announcement:', error);
-      showStatus('Unable to save announcement.', 'error');
+      showStatus(`Failed to save announcement: ${getErrorMessage(error)}`, 'error');
     } finally {
       setLoading(false);
+      setActionLoading(null);
     }
   };
 
   const deleteAnnouncement = async (id: string) => {
     if (!confirm('Are you sure you want to delete this announcement?')) return;
     setLoading(true);
+    setActionLoading('Deleting announcement...');
     try {
       await writeClient.delete(id);
       await fetchAnnouncements();
       showStatus('Announcement deleted successfully.', 'success');
     } catch (error) {
       console.error('Error deleting announcement:', error);
-      showStatus('Unable to delete announcement.', 'error');
+      showStatus(`Failed to delete announcement: ${getErrorMessage(error)}`, 'error');
     } finally {
       setLoading(false);
+      setActionLoading(null);
+    }
+  };
+
+  const resetAnalytics = () => {
+    setLoading(true);
+    setActionLoading('Resetting analytics...');
+    try {
+      resetClickData();
+      showStatus('Analytics reset successfully.', 'success');
+    } catch (error) {
+      console.error('Error resetting analytics:', error);
+      showStatus(`Unable to reset analytics: ${getErrorMessage(error)}`, 'error');
+    } finally {
+      setLoading(false);
+      setActionLoading(null);
     }
   };
 
@@ -612,10 +678,11 @@ export default function AdminPage() {
           <h2 className="text-2xl font-semibold mb-4">Actions</h2>
           <div className="flex gap-4 flex-wrap">
             <button
-              onClick={resetClickData}
+              onClick={resetAnalytics}
               className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              disabled={loading}
             >
-              Reset Analytics
+              {actionLoading === 'Resetting analytics...' ? 'Resetting...' : 'Reset Analytics'}
             </button>
 
             <button
@@ -670,7 +737,7 @@ export default function AdminPage() {
                   <p className="text-gray-400">Add, edit, or remove music releases and save them directly to Sanity.</p>
                 </div>
                 <button
-                  onClick={() => setEditingMusic({ title: '', artist: '', duration: '', coverImage: '', embedUrl: '', link: '', platform: 'spotify', releaseDate: new Date().toISOString().slice(0, 10), featured: false })}
+                  onClick={() => setEditingMusic({ title: '', artist: '', duration: '', coverImage: '', embedUrl: '', link: '', platform: 'spotify', releaseDate: new Date().toISOString().slice(0, 10), featured: false, latestRelease: false })}
                   className="bg-neon-green text-black px-4 py-2 rounded-lg hover:bg-opacity-80 transition-colors"
                 >
                   Add Release
@@ -789,6 +856,15 @@ export default function AdminPage() {
                       />
                       Featured
                     </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={editingMusic.latestRelease ?? false}
+                        onChange={(e) => setEditingMusic({ ...editingMusic, latestRelease: e.target.checked })}
+                        className="rounded"
+                      />
+                      Latest Release
+                    </label>
                   </div>
                   <div className="flex gap-2 mt-4 flex-wrap">
                     <button
@@ -796,7 +872,7 @@ export default function AdminPage() {
                       disabled={loading}
                       className="bg-neon-green text-black px-4 py-2 rounded hover:bg-opacity-80 disabled:opacity-50"
                     >
-                      {loading ? 'Saving...' : 'Save Release'}
+                      {loading ? actionLoading ?? 'Saving...' : 'Save Release'}
                     </button>
                     <button
                       type="button"
@@ -1044,7 +1120,7 @@ export default function AdminPage() {
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold">Manage Videos</h3>
                 <button
-                  onClick={() => setEditingVideo({ title: '', duration: '', thumbnail: '', embedUrl: '', link: '', platform: 'YouTube', category: 'music-videos', uploadDate: new Date().toISOString().slice(0, 10), featured: false })}
+                  onClick={() => setEditingVideo({ title: '', duration: '', thumbnail: '', embedUrl: '', link: '', platform: 'YouTube', category: 'music-videos', uploadDate: new Date().toISOString().slice(0, 10), featured: false, latestRelease: false })}
                   className="bg-neon-green text-black px-4 py-2 rounded-lg hover:bg-opacity-80 transition-colors"
                 >
                   Add Video
@@ -1165,6 +1241,15 @@ export default function AdminPage() {
                       />
                       Featured
                     </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={editingVideo.latestRelease ?? false}
+                        onChange={(e) => setEditingVideo({ ...editingVideo, latestRelease: e.target.checked })}
+                        className="rounded"
+                      />
+                      Latest Release
+                    </label>
                   </div>
                   <div className="flex gap-2 mt-4 flex-wrap">
                     <button
@@ -1172,7 +1257,7 @@ export default function AdminPage() {
                       disabled={loading}
                       className="bg-neon-green text-black px-4 py-2 rounded hover:bg-opacity-80 disabled:opacity-50"
                     >
-                      {loading ? 'Saving...' : 'Save Video'}
+                      {loading ? actionLoading ?? 'Saving...' : 'Save Video'}
                     </button>
                     <button
                       type="button"
@@ -1192,7 +1277,7 @@ export default function AdminPage() {
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold">Manage Announcements</h3>
                 <button
-                  onClick={() => setEditingAnnouncement({ title: '', message: '', link: '', embedUrl: '', expiresAt: '', featured: false })}
+                  onClick={() => setEditingAnnouncement({ title: '', message: '', link: '', embedUrl: '', mediaUrl: '', expiresAt: '', featured: false, showCountdown: false })}
                   className="bg-neon-green text-black px-4 py-2 rounded-lg hover:bg-opacity-80 transition-colors"
                 >
                   Add Announcement
@@ -1239,13 +1324,6 @@ export default function AdminPage() {
                     <input
                       type="url"
                       placeholder="Link URL"
-                      value={editingAnnouncement.link}
-                      onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, link: e.target.value })}
-                      className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
-                    />
-                    <input
-                      type="url"
-                      placeholder="Link URL"
                       value={editingAnnouncement.link || ''}
                       onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, link: e.target.value })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
@@ -1279,14 +1357,23 @@ export default function AdminPage() {
                       onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, expiresAt: e.target.value })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
                     />
-                    <label className="flex items-center">
+                    <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={editingAnnouncement.featured}
                         onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, featured: e.target.checked })}
-                        className="mr-2"
+                        className="rounded"
                       />
                       Featured
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={editingAnnouncement.showCountdown ?? false}
+                        onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, showCountdown: e.target.checked })}
+                        className="rounded"
+                      />
+                      Show Countdown
                     </label>
                     <textarea
                       placeholder="Message"

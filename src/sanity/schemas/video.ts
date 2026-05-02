@@ -66,6 +66,12 @@ export const videoSchema = defineType({
       validation: Rule => Rule.required(),
     }),
     defineField({
+      name: 'latestRelease',
+      title: 'Latest Release',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
       name: 'featured',
       title: 'Featured',
       type: 'boolean',

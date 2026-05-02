@@ -38,6 +38,12 @@ export const announcementSchema = defineType({
       type: 'datetime',
     }),
     defineField({
+      name: 'showCountdown',
+      title: 'Show Countdown',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
       name: 'featured',
       title: 'Featured',
       type: 'boolean',

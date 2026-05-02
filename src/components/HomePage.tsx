@@ -28,9 +28,10 @@ interface FeaturedAnnouncement {
   _id: string;
   title: string;
   message: string;
-  link: string;
-  embedUrl: string;
-  expiresAt: string;
+  link?: string;
+  embedUrl?: string;
+  expiresAt?: string;
+  showCountdown?: boolean;
 }
 
 const heroDots = Array.from({ length: 30 }, () => ({
@@ -44,16 +45,18 @@ export default function HomePage() {
   const [featuredMusic, setFeaturedMusic] = useState<FeaturedMusic | null>(null);
   const [featuredVideo, setFeaturedVideo] = useState<FeaturedVideo | null>(null);
   const [featuredAnnouncement, setFeaturedAnnouncement] = useState<FeaturedAnnouncement | null>(null);
+  const [announcementCountdown, setAnnouncementCountdown] = useState('');
 
   useEffect(() => {
     const fetchFeaturedContent = async () => {
       try {
-        const [musicData, videoData, announcementData] = await Promise.all([
-          client.fetch('*[_type == "music" && featured == true] | order(releaseDate desc)[0]'),
+        const [latestMusic, videoData, announcementData] = await Promise.all([
+          client.fetch('*[_type == "music" && latestRelease == true] | order(releaseDate desc)[0]'),
           client.fetch('*[_type == "video" && featured == true] | order(uploadDate desc)[0]'),
           client.fetch('*[_type == "announcement" && featured == true && (!defined(expiresAt) || expiresAt > now())] | order(_createdAt desc)[0]'),
         ]);
 
+        const musicData = latestMusic || await client.fetch('*[_type == "music" && featured == true] | order(releaseDate desc)[0]');
         setFeaturedMusic(musicData);
         setFeaturedVideo(videoData);
         setFeaturedAnnouncement(announcementData);
@@ -64,6 +67,34 @@ export default function HomePage() {
 
     fetchFeaturedContent();
   }, []);
+
+  useEffect(() => {
+    if (!featuredAnnouncement || !featuredAnnouncement.showCountdown || !featuredAnnouncement.expiresAt) {
+      setAnnouncementCountdown('');
+      return;
+    }
+
+    const expiresAt = featuredAnnouncement.expiresAt;
+    const updateCountdown = () => {
+      const expires = new Date(expiresAt).getTime();
+      const diff = expires - Date.now();
+      if (diff <= 0) {
+        setAnnouncementCountdown('Expired');
+        return;
+      }
+
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setAnnouncementCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+    };
+
+    updateCountdown();
+    const interval = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(interval);
+  }, [featuredAnnouncement]);
+
   return (
     <div className="min-h-screen bg-black text-white">
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -254,7 +285,10 @@ export default function HomePage() {
               <h2 className="text-4xl font-bold mb-8 text-center">Latest News</h2>
               <div className="bg-gray-900 rounded-lg p-8 text-center max-w-4xl mx-auto">
                 <h3 className="text-2xl font-semibold mb-4">{featuredAnnouncement.title}</h3>
-                <p className="text-gray-300 mb-6">{featuredAnnouncement.message}</p>
+                <p className="text-gray-300 mb-4">{featuredAnnouncement.message}</p>
+                {featuredAnnouncement.showCountdown && announcementCountdown && (
+                  <p className="text-neon-green font-semibold mb-4">Countdown: {announcementCountdown}</p>
+                )}
                 <div className="flex justify-center gap-4 flex-wrap">
                   {featuredAnnouncement.link && (
                     <a
