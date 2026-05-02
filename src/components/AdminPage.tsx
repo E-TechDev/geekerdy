@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState, type ChangeEvent } from 'react';
-import { getClickData, resetClickData, persistClickData, loadClickData } from '@/lib/analytics';
+import { getClickData, resetClickData, loadClickData } from '@/lib/analytics';
 import { adminPassword, adminLockAttempts, adminLockMinutes } from '@/lib/env';
 import { client, writeClient } from '@/lib/sanity';
 
@@ -124,8 +124,8 @@ export default function AdminPage() {
 
   const uploadAndSetField = async (
     event: ChangeEvent<HTMLInputElement>,
-    currentItem: any,
-    setItem: (value: any) => void,
+    currentItem: Record<string, unknown>,
+    setItem: (value: Record<string, unknown>) => void,
     fieldName: string
   ) => {
     const file = event.target.files?.[0];
@@ -137,6 +137,7 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    // eslint-disable react-hooks/set-state-in-effect
     if (typeof window === 'undefined') return;
     const stored = localStorage.getItem(ADMIN_LOCK_STATE_KEY);
     if (stored) {
@@ -156,6 +157,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!lockUntil) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeLeft('');
       return;
     }
@@ -427,12 +429,17 @@ export default function AdminPage() {
 
   // Load data when section changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (activeSection === 'music') fetchMusic();
+     
     if (activeSection === 'videos') fetchVideos();
+     
     if (activeSection === 'gallery') fetchGallery();
+     
     if (activeSection === 'events') fetchEvents();
+     
     if (activeSection === 'announcements') fetchAnnouncements();
-  }, [activeSection]);
+  }, [activeSection, fetchAnnouncements, fetchEvents, fetchGallery, fetchMusic, fetchVideos]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

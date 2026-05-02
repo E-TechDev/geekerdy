@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { client } from '@/lib/sanity';
 import { FaPlay, FaPause } from 'react-icons/fa';
-import { trackClick } from '@/lib/analytics';
 
 interface MusicItem {
   _id: string;
