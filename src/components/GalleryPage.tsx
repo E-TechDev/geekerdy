@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { client } from '@/lib/sanity';
 
 interface GalleryItem {
@@ -62,11 +63,15 @@ export default function GalleryPage() {
                 transition={{ duration: 0.8, delay: index * 0.1 }}
                 className="break-inside-avoid relative group cursor-pointer"
               >
-                <img
-                  src={image.image}
-                  alt={image.title}
-                  className="w-full rounded-lg hover:scale-105 transition-transform duration-300"
-                />
+                <div className="relative w-full h-64">
+                  <Image
+                    src={image.image}
+                    alt={image.title}
+                    fill
+                    className="rounded-lg hover:scale-105 transition-transform duration-300 object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 rounded-lg flex items-center justify-center">
                   <div className="opacity-0 group-hover:opacity-100 text-white text-center p-4">
                     <p className="text-sm font-semibold">{image.title}</p>

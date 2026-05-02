@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { client } from '@/lib/sanity';
 import { FaPlay, FaPause } from 'react-icons/fa';
 
@@ -92,12 +93,15 @@ export default function MusicPage() {
               >
                 <div className="relative">
                   {song.coverImage ? (
-                    <img
-                      src={song.coverImage}
-                      alt={song.title}
-                      className="w-full h-48 object-cover"
-                      loading="lazy"
-                    />
+                    <div className="relative w-full h-48">
+                      <Image
+                        src={song.coverImage}
+                        alt={song.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    </div>
                   ) : (
                     <div className="w-full h-48 bg-gray-800 flex items-center justify-center">
                       <div className="text-6xl opacity-20">

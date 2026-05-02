@@ -1,7 +1,9 @@
 'use client';
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { motion } from 'framer-motion';
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { useEffect, useState, useCallback, type ChangeEvent } from 'react';
 import { getClickData, resetClickData, loadClickData } from '@/lib/analytics';
 import { adminPassword, adminLockAttempts, adminLockMinutes } from '@/lib/env';
 import { client, writeClient } from '@/lib/sanity';
@@ -124,8 +126,8 @@ export default function AdminPage() {
 
   const uploadAndSetField = async (
     event: ChangeEvent<HTMLInputElement>,
-    currentItem: Record<string, unknown>,
-    setItem: (value: Record<string, unknown>) => void,
+    currentItem: Record<string, any>,
+    setItem: any,
     fieldName: string
   ) => {
     const file = event.target.files?.[0];
@@ -157,7 +159,6 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!lockUntil) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeLeft('');
       return;
     }
@@ -196,7 +197,7 @@ export default function AdminPage() {
   };
 
   // Fetch data functions
-  const fetchMusic = async () => {
+  const fetchMusic = useCallback(async () => {
     try {
       const data = await client.fetch('*[_type == "music"] | order(releaseDate desc)');
       setMusicItems(data);
@@ -204,9 +205,9 @@ export default function AdminPage() {
       console.error('Error fetching music:', error);
       showStatus('Unable to load music items.', 'error');
     }
-  };
+  }, []);
 
-  const fetchVideos = async () => {
+  const fetchVideos = useCallback(async () => {
     try {
       const data = await client.fetch('*[_type == "video"] | order(uploadDate desc)');
       setVideoItems(data);
@@ -214,9 +215,9 @@ export default function AdminPage() {
       console.error('Error fetching videos:', error);
       showStatus('Unable to load videos.', 'error');
     }
-  };
+  }, []);
 
-  const fetchGallery = async () => {
+  const fetchGallery = useCallback(async () => {
     try {
       const data = await client.fetch('*[_type == "gallery"] | order(uploadDate desc)');
       setGalleryItems(data);
@@ -224,9 +225,9 @@ export default function AdminPage() {
       console.error('Error fetching gallery:', error);
       showStatus('Unable to load gallery items.', 'error');
     }
-  };
+  }, []);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const data = await client.fetch('*[_type == "event"] | order(date asc)');
       setEventItems(data);
@@ -234,9 +235,9 @@ export default function AdminPage() {
       console.error('Error fetching events:', error);
       showStatus('Unable to load events.', 'error');
     }
-  };
+  }, []);
 
-  const fetchAnnouncements = async () => {
+  const fetchAnnouncements = useCallback(async () => {
     try {
       const data = await client.fetch('*[_type == "announcement"] | order(expiresAt asc)');
       setAnnouncementItems(data);
@@ -244,7 +245,7 @@ export default function AdminPage() {
       console.error('Error fetching announcements:', error);
       showStatus('Unable to load announcements.', 'error');
     }
-  };
+  }, []);
 
   // CRUD operations
   const saveMusic = async (item: MusicItem) => {
@@ -429,7 +430,6 @@ export default function AdminPage() {
 
   // Load data when section changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (activeSection === 'music') fetchMusic();
      
     if (activeSection === 'videos') fetchVideos();
