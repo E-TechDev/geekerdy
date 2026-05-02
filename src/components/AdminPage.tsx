@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState, useCallback, type ChangeEvent, type Dispatch, type SetStateAction } from 'react';
 import { getClickData, resetClickData, loadClickData } from '@/lib/analytics';
 import { adminPassword, adminLockAttempts, adminLockMinutes } from '@/lib/env';
-import { client, writeClient } from '@/lib/sanity';
+import { client } from '@/lib/sanity';
 
 const ADMIN_LOCK_STATE_KEY = 'adminAuthState';
 
@@ -118,16 +118,36 @@ export default function AdminPage() {
     }
   };
 
+  const apiRequest = async (url: string, method: 'POST' | 'PATCH' | 'DELETE' = 'POST', body?: unknown, isFormData = false) => {
+    const response = await fetch(url, {
+      method,
+      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+      headers: isFormData ? undefined : { 'Content-Type': 'application/json' },
+    });
+
+    const contentType = response.headers.get('content-type') || '';
+    const responseBody = contentType.includes('application/json') ? await response.json() : null;
+
+    if (!response.ok) {
+      const message = responseBody?.error || responseBody?.message || response.statusText;
+      throw new Error(message || 'Server error');
+    }
+
+    return responseBody;
+  };
+
   const uploadImageAsset = async (file?: File): Promise<string | undefined> => {
     if (!file) return undefined;
 
     try {
       setLoading(true);
       setActionLoading('Uploading...');
-      const asset = await writeClient.assets.upload('image', file, { filename: file.name });
-      if (asset && typeof asset.url === 'string') {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await apiRequest('/api/assets', 'POST', formData, true);
+      if (response?.success && response.url) {
         showStatus('Upload completed successfully.', 'success');
-        return asset.url;
+        return response.url as string;
       }
     } catch (uploadError) {
       console.error('Error uploading asset:', uploadError);
@@ -212,15 +232,6 @@ export default function AdminPage() {
     localStorage.setItem(ADMIN_LOCK_STATE_KEY, payload);
   };
 
-  const unsetPreviousLatest = async (schemaType: string, preserveId?: string) => {
-    try {
-      const existingIds: string[] = await client.fetch(`*[_type == "${schemaType}" && latestRelease == true${preserveId ? ' && _id != $preserveId' : ''}]._id`, { preserveId });
-      await Promise.all(existingIds.map((id) => writeClient.patch(id).set({ latestRelease: false }).commit()));
-    } catch (error) {
-      console.error('Error unsetting previous latest release:', error);
-    }
-  };
-
   // Fetch data functions
   const fetchMusic = useCallback(async () => {
     try {
@@ -278,14 +289,11 @@ export default function AdminPage() {
     setActionLoading(item._id ? 'Updating music...' : 'Saving music...');
     try {
       const { _id, ...payload } = item;
-      if (payload.latestRelease) {
-        await unsetPreviousLatest('music', _id);
-      }
       if (_id) {
-        await writeClient.patch(_id).set(payload).commit();
+        await apiRequest(`/api/content/music/${_id}`, 'PATCH', payload);
         showStatus('Music release updated successfully.', 'success');
       } else {
-        await writeClient.create({ _type: 'music', ...payload });
+        await apiRequest('/api/content/music', 'POST', payload);
         showStatus('Music release added successfully.', 'success');
       }
       await fetchMusic();
@@ -304,7 +312,7 @@ export default function AdminPage() {
     setLoading(true);
     setActionLoading('Deleting music...');
     try {
-      await writeClient.delete(id);
+      await apiRequest(`/api/content/music/${id}`, 'DELETE');
       await fetchMusic();
       showStatus('Music release deleted successfully.', 'success');
     } catch (error) {
@@ -321,14 +329,11 @@ export default function AdminPage() {
     setActionLoading(item._id ? 'Updating video...' : 'Saving video...');
     try {
       const { _id, ...payload } = item;
-      if (payload.latestRelease) {
-        await unsetPreviousLatest('video', _id);
-      }
       if (_id) {
-        await writeClient.patch(_id).set(payload).commit();
+        await apiRequest(`/api/content/video/${_id}`, 'PATCH', payload);
         showStatus('Video updated successfully.', 'success');
       } else {
-        await writeClient.create({ _type: 'video', ...payload });
+        await apiRequest('/api/content/video', 'POST', payload);
         showStatus('Video added successfully.', 'success');
       }
       await fetchVideos();
@@ -347,7 +352,7 @@ export default function AdminPage() {
     setLoading(true);
     setActionLoading('Deleting video...');
     try {
-      await writeClient.delete(id);
+      await apiRequest(`/api/content/video/${id}`, 'DELETE');
       await fetchVideos();
       showStatus('Video deleted successfully.', 'success');
     } catch (error) {
@@ -365,10 +370,10 @@ export default function AdminPage() {
     try {
       const { _id, ...payload } = item;
       if (_id) {
-        await writeClient.patch(_id).set(payload).commit();
+        await apiRequest(`/api/content/gallery/${_id}`, 'PATCH', payload);
         showStatus('Gallery item updated successfully.', 'success');
       } else {
-        await writeClient.create({ _type: 'gallery', ...payload });
+        await apiRequest('/api/content/gallery', 'POST', payload);
         showStatus('Gallery item added successfully.', 'success');
       }
       await fetchGallery();
@@ -387,7 +392,7 @@ export default function AdminPage() {
     setLoading(true);
     setActionLoading('Deleting gallery item...');
     try {
-      await writeClient.delete(id);
+      await apiRequest(`/api/content/gallery/${id}`, 'DELETE');
       await fetchGallery();
       showStatus('Gallery item deleted successfully.', 'success');
     } catch (error) {
@@ -405,10 +410,10 @@ export default function AdminPage() {
     try {
       const { _id, ...payload } = item;
       if (_id) {
-        await writeClient.patch(_id).set(payload).commit();
+        await apiRequest(`/api/content/event/${_id}`, 'PATCH', payload);
         showStatus('Event updated successfully.', 'success');
       } else {
-        await writeClient.create({ _type: 'event', ...payload });
+        await apiRequest('/api/content/event', 'POST', payload);
         showStatus('Event added successfully.', 'success');
       }
       await fetchEvents();
@@ -427,7 +432,7 @@ export default function AdminPage() {
     setLoading(true);
     setActionLoading('Deleting event...');
     try {
-      await writeClient.delete(id);
+      await apiRequest(`/api/content/event/${id}`, 'DELETE');
       await fetchEvents();
       showStatus('Event deleted successfully.', 'success');
     } catch (error) {
@@ -445,10 +450,10 @@ export default function AdminPage() {
     try {
       const { _id, ...payload } = item;
       if (_id) {
-        await writeClient.patch(_id).set(payload).commit();
+        await apiRequest(`/api/content/announcement/${_id}`, 'PATCH', payload);
         showStatus('Announcement updated successfully.', 'success');
       } else {
-        await writeClient.create({ _type: 'announcement', ...payload });
+        await apiRequest('/api/content/announcement', 'POST', payload);
         showStatus('Announcement added successfully.', 'success');
       }
       await fetchAnnouncements();
@@ -467,7 +472,7 @@ export default function AdminPage() {
     setLoading(true);
     setActionLoading('Deleting announcement...');
     try {
-      await writeClient.delete(id);
+      await apiRequest(`/api/content/announcement/${id}`, 'DELETE');
       await fetchAnnouncements();
       showStatus('Announcement deleted successfully.', 'success');
     } catch (error) {
