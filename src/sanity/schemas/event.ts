@@ -35,9 +35,14 @@ export const eventSchema = defineType({
       type: 'url',
     }),
     defineField({
-      name: 'description',
-      title: 'Description',
-      type: 'text',
+      name: 'image',
+      title: 'Event Image',
+      type: 'url',
+    }),
+    defineField({
+      name: 'mediaUrl',
+      title: 'Media URL (YouTube, Instagram, etc.)',
+      type: 'url',
     }),
     defineField({
       name: 'featured',

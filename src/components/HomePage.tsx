@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { trackClick } from '@/lib/analytics';
-import { homeSpotifyLink, homeBoomplayLink, homeSpotifyEmbed, homeYoutubeEmbed } from '@/lib/env';
+import { homeSpotifyLink, homeBoomplayLink, homeSpotifyEmbed } from '@/lib/env';
 import { client } from '@/lib/sanity';
 
 interface FeaturedMusic {
@@ -52,12 +52,11 @@ export default function HomePage() {
       try {
         const [latestMusic, videoData, allAnnouncements] = await Promise.all([
           client.fetch('*[_type == "music" && latestRelease == true] | order(releaseDate desc)[0]'),
-          client.fetch('*[_type == "video" && featured == true] | order(uploadDate desc)[0]'),
+          client.fetch('*[_type == "video" && latestRelease == true] | order(uploadDate desc)[0]'),
           client.fetch('*[_type == "announcement" && (!defined(expiresAt) || expiresAt > now())] | order(_createdAt desc)'),
         ]);
 
-        const musicData = latestMusic || await client.fetch('*[_type == "music" && featured == true] | order(releaseDate desc)[0]');
-        setFeaturedMusic(musicData);
+        setFeaturedMusic(latestMusic);
         setFeaturedVideo(videoData);
         setAnnouncements(allAnnouncements);
       } catch (error) {
@@ -71,21 +70,27 @@ export default function HomePage() {
   useEffect(() => {
     const updateCountdowns = () => {
       const newCountdowns: Record<string, string> = {};
-      announcements.forEach((announcement) => {
+      const now = Date.now();
+      const activeAnnouncements = announcements.filter((announcement) => {
+        if (!announcement.expiresAt) return true;
+        return new Date(announcement.expiresAt).getTime() > now;
+      });
+
+      activeAnnouncements.forEach((announcement) => {
         if (announcement.showCountdown && announcement.expiresAt) {
           const expires = new Date(announcement.expiresAt).getTime();
-          const diff = expires - Date.now();
-          if (diff <= 0) {
-            newCountdowns[announcement._id] = 'Expired';
-          } else {
+          const diff = expires - now;
+          if (diff > 0) {
             const days = Math.floor(diff / 86400000);
             const hours = Math.floor((diff % 86400000) / 3600000);
             const minutes = Math.floor((diff % 3600000) / 60000);
             const seconds = Math.floor((diff % 60000) / 1000);
-            newCountdowns[announcement._id] = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            newCountdowns[announcement._id] = `${days.toString().padStart(2, '0')} : ${hours.toString().padStart(2, '0')} : ${minutes.toString().padStart(2, '0')} : ${seconds.toString().padStart(2, '0')}`;
           }
         }
       });
+
+      setAnnouncements(activeAnnouncements);
       window.setTimeout(() => setAnnouncementCountdowns(newCountdowns), 0);
     };
 
@@ -170,7 +175,9 @@ export default function HomePage() {
               <div className="bg-gray-900 rounded-lg p-8 text-center">
                 <h3 className="text-2xl font-semibold mb-4">{featuredMusic.title}</h3>
                 <p className="text-gray-400 mb-2">by {featuredMusic.artist}</p>
-                <p className="text-gray-400 mb-6">Released {new Date(featuredMusic.releaseDate).toLocaleDateString()}</p>
+                {featuredMusic.releaseDate && (
+                  <p className="text-gray-400 mb-6">Released {new Date(featuredMusic.releaseDate).toLocaleDateString()}</p>
+                )}
                 <div className="flex justify-center gap-4 flex-wrap">
                   <a
                     href={homeSpotifyLink}
@@ -194,51 +201,53 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="bg-gray-900 rounded-lg p-8 text-center">
-                <h3 className="text-2xl font-semibold mb-4">6IXTEEN Vibe</h3>
-                <p className="text-gray-400 mb-6">Out now on all platforms</p>
-                <div className="flex justify-center gap-4 flex-wrap">
-                  <a
-                    href={homeSpotifyLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-colors"
-                    onClick={() => trackClick('spotify')}
-                  >
-                    Listen on Spotify
-                  </a>
-                  <a
-                    href={homeBoomplayLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-orange-600 text-white px-6 py-2 rounded-full hover:bg-orange-700 transition-colors"
-                    onClick={() => trackClick('boomplay')}
-                  >
-                    Listen on Boomplay
-                  </a>
-                </div>
+                <h3 className="text-2xl font-semibold mb-4">No Latest Release</h3>
               </div>
             )}
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="mb-16"
-          >
-            <h2 className="text-4xl font-bold mb-8 text-center">Featured on Spotify</h2>
-            <div className="flex justify-center">
-              <iframe
-                src={homeSpotifyEmbed}
-                width="100%"
-                height="352"
-                frameBorder="0"
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy"
-                className="max-w-2xl rounded-lg"
-              ></iframe>
-            </div>
-          </motion.div>
+          {announcements.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="mb-16"
+            >
+              <h2 className="text-4xl font-bold mb-8 text-center">Announcements</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {announcements.map((announcement) => (
+                  <motion.div
+                    key={announcement._id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-gray-900 rounded-lg p-6 text-center"
+                  >
+                    <h3 className="text-xl font-semibold mb-4">{announcement.title}</h3>
+                    <p className="text-gray-300 mb-4">{announcement.message}</p>
+                    {announcement.showCountdown && announcementCountdowns[announcement._id] && (
+                      <p className="text-neon-green font-mono font-semibold mb-4 text-lg">
+                        {announcementCountdowns[announcement._id]}
+                      </p>
+                    )}
+                    <div className="flex justify-center gap-4 flex-wrap">
+                      {announcement.link && (
+                        <a
+                          href={announcement.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-neon-green text-black px-4 py-2 rounded-full font-semibold hover:bg-opacity-80 transition-colors"
+                        >
+                          Learn More
+                        </a>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -260,53 +269,32 @@ export default function HomePage() {
                   className="max-w-4xl rounded-lg"
                 ></iframe>
               ) : (
-                <iframe
-                  width="100%"
-                  height="400"
-                  src={homeYoutubeEmbed}
-                  title="Featured Video"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="max-w-4xl rounded-lg"
-                ></iframe>
+                <div className="bg-gray-900 rounded-lg p-8 text-center max-w-4xl">
+                  <h3 className="text-2xl font-semibold mb-4">No Latest Video</h3>
+                </div>
               )}
             </div>
           </motion.div>
 
-          {announcements.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="mb-16"
-            >
-              <h2 className="text-4xl font-bold mb-8 text-center">Announcements</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {announcements.map((announcement) => (
-                  <div key={announcement._id} className="bg-gray-900 rounded-lg p-6 text-center">
-                    <h3 className="text-xl font-semibold mb-4">{announcement.title}</h3>
-                    <p className="text-gray-300 mb-4">{announcement.message}</p>
-                    {announcement.showCountdown && announcementCountdowns[announcement._id] && (
-                      <p className="text-neon-green font-semibold mb-4">Countdown: {announcementCountdowns[announcement._id]}</p>
-                    )}
-                    <div className="flex justify-center gap-4 flex-wrap">
-                      {announcement.link && (
-                        <a
-                          href={announcement.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-neon-green text-black px-4 py-2 rounded-full font-semibold hover:bg-opacity-80 transition-colors"
-                        >
-                          Learn More
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mb-16"
+          >
+            <h2 className="text-4xl font-bold mb-8 text-center">Featured on Spotify</h2>
+            <div className="flex justify-center">
+              <iframe
+                src={homeSpotifyEmbed}
+                width="100%"
+                height="352"
+                frameBorder="0"
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"
+                className="max-w-2xl rounded-lg"
+              ></iframe>
+            </div>
+          </motion.div>
         </div>
       </section>
     </div>

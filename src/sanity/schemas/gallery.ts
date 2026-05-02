@@ -31,7 +31,6 @@ export const gallerySchema = defineType({
       name: 'uploadDate',
       title: 'Upload Date',
       type: 'date',
-      validation: Rule => Rule.required(),
     }),
     defineField({
       name: 'featured',

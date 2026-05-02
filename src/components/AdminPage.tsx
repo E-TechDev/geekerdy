@@ -7,6 +7,7 @@ import { useEffect, useState, useCallback, type ChangeEvent, type Dispatch, type
 import { getClickData, resetClickData, loadClickData } from '@/lib/analytics';
 import { adminPassword, adminLockAttempts, adminLockMinutes } from '@/lib/env';
 import { client } from '@/lib/sanity';
+import Toast from './Toast';
 
 const ADMIN_LOCK_STATE_KEY = 'adminAuthState';
 
@@ -44,7 +45,7 @@ interface GalleryItem {
   image?: string;
   link?: string;
   caption: string;
-  uploadDate: string;
+  uploadDate?: string;
   featured: boolean;
 }
 
@@ -56,6 +57,8 @@ interface EventItem {
   location: string;
   ticketLink?: string;
   description: string;
+  image?: string;
+  mediaUrl?: string;
   featured: boolean;
 }
 
@@ -75,8 +78,7 @@ export default function AdminPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [statusMessage, setStatusMessage] = useState('');
-  const [statusType, setStatusType] = useState<'success' | 'error' | ''>('');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState('');
@@ -99,13 +101,11 @@ export default function AdminPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const showStatus = (message: string, type: 'success' | 'error') => {
-    setStatusMessage(message);
-    setStatusType(type);
+    setToast({ message, type });
   };
 
-  const clearStatus = () => {
-    setStatusMessage('');
-    setStatusType('');
+  const clearToast = () => {
+    setToast(null);
   };
 
   const getErrorMessage = (error: unknown) => {
@@ -168,14 +168,27 @@ export default function AdminPage() {
   ) => {
     const file = event.target.files?.[0];
     if (!file || !currentItem) return;
-    const url = await uploadImageAsset(file);
-    if (url) {
-      setItem({ ...currentItem, [fieldName]: url } as T);
+
+    // Create immediate preview
+    const previewUrl = URL.createObjectURL(file);
+    setItem({ ...currentItem, [fieldName]: previewUrl } as T);
+
+    // Upload in background
+    try {
+      const url = await uploadImageAsset(file);
+      if (url) {
+        // Replace preview with actual uploaded URL
+        setItem({ ...currentItem, [fieldName]: url } as T);
+        URL.revokeObjectURL(previewUrl); // Clean up preview URL
+      }
+    } catch (error) {
+      // On upload failure, keep the preview but show error
+      console.error('Upload failed, keeping preview:', error);
+      URL.revokeObjectURL(previewUrl);
     }
   };
 
   useEffect(() => {
-    // eslint-disable react-hooks/set-state-in-effect
     if (typeof window === 'undefined') return;
     const stored = localStorage.getItem(ADMIN_LOCK_STATE_KEY);
     if (stored) {
@@ -220,12 +233,6 @@ export default function AdminPage() {
     const interval = window.setInterval(updateRemaining, 1000);
     return () => window.clearInterval(interval);
   }, [lockUntil]);
-
-  useEffect(() => {
-    if (!statusMessage) return;
-    const timer = window.setTimeout(clearStatus, 4000);
-    return () => window.clearTimeout(timer);
-  }, [statusMessage]);
 
   const saveLockState = (nextAttempts: number, nextLockUntil: number | null) => {
     const payload = JSON.stringify({ attempts: nextAttempts, lockUntil: nextLockUntil });
@@ -512,6 +519,17 @@ export default function AdminPage() {
     if (activeSection === 'announcements') fetchAnnouncements();
   }, [activeSection, fetchAnnouncements, fetchEvents, fetchGallery, fetchMusic, fetchVideos]);
 
+  // Load all analytics data when admin logs in
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchMusic();
+      fetchVideos();
+      fetchGallery();
+      fetchEvents();
+      fetchAnnouncements();
+    }
+  }, [isLoggedIn, fetchMusic, fetchVideos, fetchGallery, fetchEvents, fetchAnnouncements]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -726,12 +744,6 @@ export default function AdminPage() {
             </button>
           </div>
         </motion.div>
-
-        {statusMessage && (
-          <div className={`mb-6 rounded-lg p-4 ${statusType === 'success' ? 'bg-green-500/20 border border-green-500' : 'bg-red-500/20 border border-red-500'}`}>
-            <p className={`font-semibold ${statusType === 'success' ? 'text-green-200' : 'text-red-200'}`}>{statusMessage}</p>
-          </div>
-        )}
 
         <div className="mt-8">
           {activeSection === 'music' && (
@@ -966,8 +978,22 @@ export default function AdminPage() {
                     <input
                       type="url"
                       placeholder="Ticket Link"
-                      value={editingEvent.ticketLink}
+                      value={editingEvent.ticketLink || ''}
                       onChange={(e) => setEditingEvent({ ...editingEvent, ticketLink: e.target.value })}
+                      className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
+                    />
+                    <input
+                      type="url"
+                      placeholder="Event Image URL (optional)"
+                      value={editingEvent.image || ''}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, image: e.target.value })}
+                      className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
+                    />
+                    <input
+                      type="url"
+                      placeholder="Media URL (YouTube, Instagram, etc.)"
+                      value={editingEvent.mediaUrl || ''}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, mediaUrl: e.target.value })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
                     />
                     <label className="flex items-center">
@@ -1013,10 +1039,10 @@ export default function AdminPage() {
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold">Manage Gallery</h3>
                 <button
-                  onClick={() => setEditingGallery({ title: '', image: '', caption: '', uploadDate: '', featured: false })}
+                  onClick={() => setEditingGallery({ title: '', image: '', link: '', caption: '', uploadDate: '', featured: false })}
                   className="bg-neon-green text-black px-4 py-2 rounded-lg hover:bg-opacity-80 transition-colors"
                 >
-                  Add Image
+                  Add Media
                 </button>
               </div>
 
@@ -1059,11 +1085,17 @@ export default function AdminPage() {
                     />
                     <input
                       type="url"
-                      placeholder="Image URL"
-                      value={editingGallery.image}
+                      placeholder="Image URL (optional if uploading)"
+                      value={editingGallery.image || ''}
                       onChange={(e) => setEditingGallery({ ...editingGallery, image: e.target.value })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
-                      required
+                    />
+                    <input
+                      type="url"
+                      placeholder="External Media Link (YouTube, Instagram, etc.)"
+                      value={editingGallery.link || ''}
+                      onChange={(e) => setEditingGallery({ ...editingGallery, link: e.target.value })}
+                      className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
                     />
                     <label className="col-span-2 flex flex-col gap-2">
                       <span className="text-sm text-gray-300">Upload Image</span>
@@ -1083,10 +1115,10 @@ export default function AdminPage() {
                     />
                     <input
                       type="date"
-                      value={editingGallery.uploadDate}
+                      placeholder="Upload Date (optional)"
+                      value={editingGallery.uploadDate || ''}
                       onChange={(e) => setEditingGallery({ ...editingGallery, uploadDate: e.target.value })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
-                      required
                     />
                     <label className="flex items-center">
                       <input
@@ -1409,6 +1441,13 @@ export default function AdminPage() {
           )}
         </div>
       </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={clearToast}
+        />
+      )}
     </div>
   );
 }

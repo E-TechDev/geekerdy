@@ -19,3 +19,4 @@ export const homeYoutubeEmbed = process.env.NEXT_PUBLIC_HOME_YOUTUBE_EMBED || 'h
 export const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '';
 export const adminLockAttempts = Number(process.env.NEXT_PUBLIC_ADMIN_LOCK_ATTEMPTS || '3');
 export const adminLockMinutes = Number(process.env.NEXT_PUBLIC_ADMIN_LOCK_MINUTES || '10');
+export const logoUrl = process.env.NEXT_PUBLIC_LOGO_URL || '';
