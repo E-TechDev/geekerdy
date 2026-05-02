@@ -985,6 +985,15 @@ export default function AdminPage() {
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
                       required
                     />
+                    <label className="col-span-2 flex flex-col gap-2">
+                      <span className="text-sm text-gray-300">Upload Image</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => uploadAndSetField(e, editingGallery, setEditingGallery, 'image')}
+                        className="text-gray-100"
+                      />
+                    </label>
                     <textarea
                       placeholder="Caption"
                       value={editingGallery.caption}
