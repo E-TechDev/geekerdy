@@ -2,9 +2,9 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState, type ChangeEvent } from 'react';
-import { getClickData, resetClickData } from '@/lib/analytics';
+import { getClickData, resetClickData, persistClickData, loadClickData } from '@/lib/analytics';
 import { adminPassword, adminLockAttempts, adminLockMinutes } from '@/lib/env';
-import { client } from '@/lib/sanity';
+import { client, writeClient } from '@/lib/sanity';
 
 const ADMIN_LOCK_STATE_KEY = 'adminAuthState';
 
@@ -107,14 +107,14 @@ export default function AdminPage() {
 
     try {
       setLoading(true);
-      const asset = await client.assets.upload('image', file, { filename: file.name });
+      const asset = await writeClient.assets.upload('image', file, { filename: file.name });
       if (asset && typeof asset.url === 'string') {
         showStatus('Upload completed successfully.', 'success');
         return asset.url;
       }
     } catch (uploadError) {
       console.error('Error uploading asset:', uploadError);
-      showStatus('Image upload failed. Please try again.', 'error');
+      showStatus('Image upload failed. Ensure your Sanity API token is configured.', 'error');
     } finally {
       setLoading(false);
     }
@@ -250,17 +250,17 @@ export default function AdminPage() {
     try {
       const { _id, ...payload } = item;
       if (_id) {
-        await client.patch(_id).set(payload).commit();
+        await writeClient.patch(_id).set(payload).commit();
         showStatus('Music release updated successfully.', 'success');
       } else {
-        await client.create({ _type: 'music', ...payload });
+        await writeClient.create({ _type: 'music', ...payload });
         showStatus('Music release added successfully.', 'success');
       }
       await fetchMusic();
       setEditingMusic(null);
     } catch (error) {
       console.error('Error saving music:', error);
-      showStatus('Unable to save music release.', 'error');
+      showStatus('Unable to save music release. Check your token and permissions.', 'error');
     } finally {
       setLoading(false);
     }
@@ -270,7 +270,7 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this music item?')) return;
     setLoading(true);
     try {
-      await client.delete(id);
+      await writeClient.delete(id);
       await fetchMusic();
       showStatus('Music release deleted successfully.', 'success');
     } catch (error) {
@@ -286,10 +286,10 @@ export default function AdminPage() {
     try {
       const { _id, ...payload } = item;
       if (_id) {
-        await client.patch(_id).set(payload).commit();
+        await writeClient.patch(_id).set(payload).commit();
         showStatus('Video updated successfully.', 'success');
       } else {
-        await client.create({ _type: 'video', ...payload });
+        await writeClient.create({ _type: 'video', ...payload });
         showStatus('Video added successfully.', 'success');
       }
       await fetchVideos();
@@ -306,7 +306,7 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this video?')) return;
     setLoading(true);
     try {
-      await client.delete(id);
+      await writeClient.delete(id);
       await fetchVideos();
       showStatus('Video deleted successfully.', 'success');
     } catch (error) {
@@ -322,10 +322,10 @@ export default function AdminPage() {
     try {
       const { _id, ...payload } = item;
       if (_id) {
-        await client.patch(_id).set(payload).commit();
+        await writeClient.patch(_id).set(payload).commit();
         showStatus('Gallery item updated successfully.', 'success');
       } else {
-        await client.create({ _type: 'gallery', ...payload });
+        await writeClient.create({ _type: 'gallery', ...payload });
         showStatus('Gallery item added successfully.', 'success');
       }
       await fetchGallery();
@@ -342,7 +342,7 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this gallery item?')) return;
     setLoading(true);
     try {
-      await client.delete(id);
+      await writeClient.delete(id);
       await fetchGallery();
       showStatus('Gallery item deleted successfully.', 'success');
     } catch (error) {
@@ -358,10 +358,10 @@ export default function AdminPage() {
     try {
       const { _id, ...payload } = item;
       if (_id) {
-        await client.patch(_id).set(payload).commit();
+        await writeClient.patch(_id).set(payload).commit();
         showStatus('Event updated successfully.', 'success');
       } else {
-        await client.create({ _type: 'event', ...payload });
+        await writeClient.create({ _type: 'event', ...payload });
         showStatus('Event added successfully.', 'success');
       }
       await fetchEvents();
@@ -378,7 +378,7 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this event?')) return;
     setLoading(true);
     try {
-      await client.delete(id);
+      await writeClient.delete(id);
       await fetchEvents();
       showStatus('Event deleted successfully.', 'success');
     } catch (error) {
@@ -394,10 +394,10 @@ export default function AdminPage() {
     try {
       const { _id, ...payload } = item;
       if (_id) {
-        await client.patch(_id).set(payload).commit();
+        await writeClient.patch(_id).set(payload).commit();
         showStatus('Announcement updated successfully.', 'success');
       } else {
-        await client.create({ _type: 'announcement', ...payload });
+        await writeClient.create({ _type: 'announcement', ...payload });
         showStatus('Announcement added successfully.', 'success');
       }
       await fetchAnnouncements();
@@ -414,7 +414,7 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this announcement?')) return;
     setLoading(true);
     try {
-      await client.delete(id);
+      await writeClient.delete(id);
       await fetchAnnouncements();
       showStatus('Announcement deleted successfully.', 'success');
     } catch (error) {
@@ -467,6 +467,7 @@ export default function AdminPage() {
     setError(`Invalid password. ${adminLockAttempts - nextAttempts} attempts left.`);
   };
 
+  loadClickData();
   const clickData = getClickData();
 
   if (!isLoggedIn) {

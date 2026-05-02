@@ -6,6 +6,8 @@ interface ClickData {
   socialClicks: { [key: string]: number };
 }
 
+const STORAGE_KEY = 'geekerdy_click_analytics';
+
 let clickData: ClickData = {
   spotifyClicks: 0,
   youtubeClicks: 0,
@@ -19,6 +21,27 @@ let clickData: ClickData = {
   },
 };
 
+export const loadClickData = (): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      clickData = JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error('Failed to load analytics:', error);
+  }
+};
+
+export const persistClickData = (): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(clickData));
+  } catch (error) {
+    console.error('Failed to persist analytics:', error);
+  }
+};
+
 export const trackClick = (type: string, platform?: string) => {
   if (type === 'spotify') {
     clickData.spotifyClicks++;
@@ -29,7 +52,7 @@ export const trackClick = (type: string, platform?: string) => {
   } else if (type === 'social' && platform) {
     clickData.socialClicks[platform] = (clickData.socialClicks[platform] || 0) + 1;
   }
-  // In a real app, send to server
+  persistClickData();
   console.log('Click tracked:', type, platform);
 };
 
@@ -50,4 +73,5 @@ export const resetClickData = () => {
       facebook: 0,
     },
   };
+  persistClickData();
 };
