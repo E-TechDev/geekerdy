@@ -7,6 +7,7 @@ import { client } from '@/lib/sanity';
 interface VideoItem {
   _id: string;
   title: string;
+  caption?: string;
   embedUrl: string;
   platform: string;
   category: string;
@@ -118,11 +119,14 @@ export default function VideosPage() {
                     className="rounded-t-lg"
                   ></iframe>
                 </div>
-                <div className="p-6">
+                <div className="bg-black/70 backdrop-blur-sm px-6 py-4">
                   <h3 className="text-xl font-semibold mb-2">{video.title}</h3>
-                  <p className="text-gray-400">{video.platform}</p>
+                  <p className="text-gray-400 mb-2">{video.platform}</p>
                   {video.uploadDate && (
-                    <p className="text-sm text-gray-500">{new Date(video.uploadDate).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-500 mb-2">{new Date(video.uploadDate).toLocaleDateString()}</p>
+                  )}
+                  {video.caption && (
+                    <p className="text-gray-300 text-sm">{video.caption}</p>
                   )}
                 </div>
               </motion.div>

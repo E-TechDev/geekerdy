@@ -102,8 +102,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-<div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black pointer-events-none">
-            <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute inset-0 z-0 pointer-events-none bg-gradient-to-br from-black via-gray-900 to-black">
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
             {heroDots.map((dot, i) => (
               <motion.div
                 key={i}
@@ -121,7 +121,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="relative z-10 text-center px-4">
+        <div className="relative z-10 text-center px-4 pointer-events-auto">
           <motion.h1
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}

@@ -29,6 +29,12 @@ export const videoSchema = defineType({
       type: 'url',
     }),
     defineField({
+      name: 'caption',
+      title: 'Caption',
+      type: 'text',
+      description: 'Optional caption to display below the video',
+    }),
+    defineField({
       name: 'thumbnail',
       title: 'Thumbnail',
       type: 'image',
