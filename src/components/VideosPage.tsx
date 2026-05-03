@@ -10,7 +10,8 @@ interface VideoItem {
   embedUrl: string;
   platform: string;
   category: string;
-  uploadDate: string;
+  uploadDate?: string;
+  thumbnail?: { asset?: { _ref: string } } | string;
   featured: boolean;
 }
 
@@ -120,7 +121,9 @@ export default function VideosPage() {
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-2">{video.title}</h3>
                   <p className="text-gray-400">{video.platform}</p>
-                  <p className="text-sm text-gray-500">{new Date(video.uploadDate).toLocaleDateString()}</p>
+                  {video.uploadDate && (
+                    <p className="text-sm text-gray-500">{new Date(video.uploadDate).toLocaleDateString()}</p>
+                  )}
                 </div>
               </motion.div>
             ))

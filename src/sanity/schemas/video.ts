@@ -15,7 +15,7 @@ export const videoSchema = defineType({
       name: 'duration',
       title: 'Duration',
       type: 'string',
-      validation: Rule => Rule.required(),
+      description: 'Optional duration (e.g., "5:30")',
     }),
     defineField({
       name: 'embedUrl',
@@ -30,8 +30,12 @@ export const videoSchema = defineType({
     }),
     defineField({
       name: 'thumbnail',
-      title: 'Thumbnail URL',
-      type: 'url',
+      title: 'Thumbnail',
+      type: 'image',
+      description: 'Video thumbnail image',
+      options: {
+        hotspot: true,
+      },
     }),
     defineField({
       name: 'platform',
@@ -63,7 +67,7 @@ export const videoSchema = defineType({
       name: 'uploadDate',
       title: 'Upload Date',
       type: 'date',
-      validation: Rule => Rule.required(),
+      description: 'Optional upload date',
     }),
     defineField({
       name: 'latestRelease',

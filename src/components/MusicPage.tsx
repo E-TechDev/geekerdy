@@ -3,20 +3,27 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { client } from '@/lib/sanity';
+import { client, getSanityImageUrl } from '@/lib/sanity';
 import { FaPlay, FaPause } from 'react-icons/fa';
+import { isBlobOrDataUrl } from '@/lib/media';
 
 interface MusicItem {
   _id: string;
   title: string;
   artist: string;
-  duration: string;
-  coverImage?: string;
+  duration?: string;
+  coverImage?: { asset?: { _ref: string } } | string;
   embedUrl: string;
   platform: string;
-  releaseDate: string;
+  releaseDate?: string;
   featured: boolean;
 }
+
+const getImageUrl = (image: MusicItem['coverImage']): string | undefined => {
+  if (!image) return undefined;
+  if (typeof image === 'string') return image;
+  return getSanityImageUrl(image);
+};
 
 export default function MusicPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,23 +99,30 @@ export default function MusicPage() {
                 className="bg-gray-900 rounded-lg overflow-hidden hover:scale-105 transition-transform duration-300"
               >
                 <div className="relative">
-                  {song.coverImage ? (
-                    <div className="relative w-full h-48">
-                      <Image
-                        src={song.coverImage}
-                        alt={song.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full h-48 bg-gray-800 flex items-center justify-center">
-                      <div className="text-6xl opacity-20">
-                        {song.platform.toLowerCase() === 'spotify' ? '🎵' : song.platform.toLowerCase() === 'boomplay' ? '🎶' : '▶️'}
+                  {(() => {
+                    const coverUrl = getImageUrl(song.coverImage);
+                    return coverUrl ? (
+                      <div className="relative w-full h-48">
+                        {isBlobOrDataUrl(coverUrl) ? (
+                          <img src={coverUrl} alt={song.title} className="object-cover w-full h-full" />
+                        ) : (
+                          <Image
+                            src={coverUrl}
+                            alt={song.title}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                        )}
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="w-full h-48 bg-gray-800 flex items-center justify-center">
+                        <div className="text-6xl opacity-20">
+                          {song.platform.toLowerCase() === 'spotify' ? '🎵' : song.platform.toLowerCase() === 'boomplay' ? '🎶' : '▶️'}
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
                     <FaPlay size={48} className="text-neon-green" />
                   </div>
@@ -116,7 +130,9 @@ export default function MusicPage() {
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-2">{song.title}</h3>
                   <p className="text-gray-400 mb-2">{song.artist}</p>
-                  <p className="text-sm text-gray-500 mb-4">{new Date(song.releaseDate).toLocaleDateString()}</p>
+                  {song.releaseDate && (
+                    <p className="text-sm text-gray-500 mb-4">{new Date(song.releaseDate).toLocaleDateString()}</p>
+                  )}
                   <button
                     onClick={() => setExpandedSong(expandedSong === song._id ? null : song._id)}
                     className="w-full bg-neon-green text-black py-2 px-4 rounded-full font-semibold hover:bg-opacity-80 transition-colors flex items-center justify-center gap-2"

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FaYoutube, FaSpotify, FaInstagram, FaTiktok, FaTwitter, FaFacebook } from 'react-icons/fa';
 import { HiMenu, HiX } from 'react-icons/hi';
 import { useState } from 'react';
@@ -103,42 +103,46 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Menu */}
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="md:hidden bg-black/95 backdrop-blur-md border-t border-gray-800"
-          >
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="block px-3 py-2 text-gray-300 hover:text-neon-green transition-colors duration-300"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-            <div className="px-2 pb-3 flex space-x-4">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-neon-green transition-colors duration-300"
-                  aria-label={social.label}
-                  onClick={() => trackClick('social', social.id)}
-                >
-                  <social.icon size={20} />
-                </a>
-              ))}
-            </div>
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden bg-black/95 backdrop-blur-md border-t border-gray-800 absolute w-full top-16 left-0"
+            >
+              <div className="px-2 pt-2 pb-3 space-y-1">
+                {navLinks.map((link) => (
+                  <motion.div key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="block px-3 py-2 text-gray-300 hover:text-neon-green transition-colors duration-300"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {link.name}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+              <div className="px-2 pb-3 flex space-x-4">
+                {socialLinks.map((social) => (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-neon-green transition-colors duration-300"
+                    aria-label={social.label}
+                    onClick={() => trackClick('social', social.id)}
+                  >
+                    <social.icon size={20} />
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </nav>
   );

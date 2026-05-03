@@ -3,23 +3,31 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { client } from '@/lib/sanity';
+import { client, getSanityImageUrl } from '@/lib/sanity';
+import { detectMediaType, getEmbedUrl, isBlobOrDataUrl } from '@/lib/media';
 import Link from 'next/link';
 
 interface EventItem {
   _id: string;
   title: string;
   venue: string;
-  date: string;
+  date?: string;
   location: string;
   ticketLink?: string;
-  description: string;
-  image?: string;
+  description?: string;
+  image?: { asset?: { _ref: string } } | string;
   mediaUrl?: string;
   featured: boolean;
 }
 
-const getCountdown = (dateString: string) => {
+const getImageUrl = (image: EventItem['image']): string | undefined => {
+  if (!image) return undefined;
+  if (typeof image === 'string') return image;
+  return getSanityImageUrl(image);
+};
+
+const getCountdown = (dateString?: string) => {
+  if (!dateString) return null;
   const target = new Date(dateString).getTime();
   const now = Date.now();
   const diff = target - now;
@@ -33,37 +41,6 @@ const getCountdown = (dateString: string) => {
   const mins = Math.floor((diff / (1000 * 60)) % 60);
 
   return `${days}d ${hours}h ${mins}m`;
-};
-
-const detectMediaType = (url: string) => {
-  if (!url) return 'image';
-  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
-  if (url.includes('instagram.com')) return 'instagram';
-  if (url.includes('facebook.com') || url.includes('fb.com')) return 'facebook';
-  if (url.includes('tiktok.com')) return 'tiktok';
-  if (url.includes('vimeo.com')) return 'vimeo';
-  return 'image';
-};
-
-const getEmbedUrl = (url: string, type: string) => {
-  if (type === 'youtube') {
-    const videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
-  }
-  if (type === 'instagram') {
-    return `https://www.instagram.com/p/${url.split('/p/')[1]?.split('/')[0]}/embed/`;
-  }
-  if (type === 'tiktok') {
-    return url.replace('/video/', '/embed/');
-  }
-  if (type === 'facebook') {
-    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`;
-  }
-  if (type === 'vimeo') {
-    const videoId = url.match(/vimeo\.com\/(\d+)/)?.[1];
-    return videoId ? `https://player.vimeo.com/video/${videoId}` : url;
-  }
-  return url;
 };
 
 export default function EventsPage() {
@@ -108,8 +85,9 @@ export default function EventsPage() {
         ) : (
           <div className="space-y-8">
             {eventItems.map((event, index) => {
-              const mediaType = event.mediaUrl ? detectMediaType(event.mediaUrl) : 'image';
-              const embedUrl = event.mediaUrl ? getEmbedUrl(event.mediaUrl, mediaType) : event.image;
+              const imageUrl = getImageUrl(event.image);
+              const mediaType = event.mediaUrl ? detectMediaType(event.mediaUrl) : (imageUrl ? 'image' : undefined);
+              const embedUrl = event.mediaUrl ? getEmbedUrl(event.mediaUrl, mediaType as string) : imageUrl;
 
               return (
                 <motion.div
@@ -119,15 +97,19 @@ export default function EventsPage() {
                   transition={{ duration: 0.8, delay: index * 0.1 }}
                   className="bg-gray-900 rounded-lg overflow-hidden shadow-lg"
                 >
-                  {(event.image || event.mediaUrl) && (
+                  {(imageUrl || event.mediaUrl) && (
                     <div className="aspect-video relative">
-                      {mediaType === 'image' ? (
-                        <Image
-                          src={embedUrl!}
-                          alt={event.title}
-                          fill
-                          className="object-cover"
-                        />
+                      {mediaType === 'image' && imageUrl ? (
+                        isBlobOrDataUrl(imageUrl) ? (
+                          <img src={imageUrl} alt={event.title} className="object-cover w-full h-full" />
+                        ) : (
+                          <Image
+                            src={imageUrl}
+                            alt={event.title}
+                            fill
+                            className="object-cover"
+                          />
+                        )
                       ) : (
                         <iframe
                           src={embedUrl}
@@ -140,21 +122,25 @@ export default function EventsPage() {
                       )}
                     </div>
                   )}
-                  <div className="p-8">
+                      <div className="p-8">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                       <div className="mb-4 md:mb-0 flex-1">
                         <h3 className="text-2xl font-semibold mb-2">{event.title}</h3>
-                        <p className="text-gray-400 mb-1">{new Date(event.date).toLocaleDateString()} at {new Date(event.date).toLocaleTimeString()}</p>
+                        {event.date && (
+                          <p className="text-gray-400 mb-1">{new Date(event.date).toLocaleDateString()} at {new Date(event.date).toLocaleTimeString()}</p>
+                        )}
                         <p className="text-gray-400 mb-4">{event.venue}, {event.location}</p>
                         {event.description && (
                           <p className="text-gray-300">{event.description}</p>
                         )}
                       </div>
                       <div className="flex flex-col gap-4 md:ml-8">
-                        <div className="text-center">
-                          <div className="text-neon-green font-semibold">Next Show In</div>
-                          <div className="text-2xl font-bold">{getCountdown(event.date)}</div>
-                        </div>
+                        {event.date ? (
+                          <div className="text-center">
+                            <div className="text-neon-green font-semibold">Next Show In</div>
+                            <div className="text-2xl font-bold">{getCountdown(event.date)}</div>
+                          </div>
+                        ) : null}
                         {event.ticketLink && (
                           <Link
                             href={event.ticketLink}

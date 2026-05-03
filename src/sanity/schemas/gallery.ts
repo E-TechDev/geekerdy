@@ -13,14 +13,18 @@ export const gallerySchema = defineType({
     }),
     defineField({
       name: 'image',
-      title: 'Image URL',
-      type: 'url',
-      validation: Rule => Rule.required(),
+      title: 'Image',
+      type: 'image',
+      description: 'Upload an image from your device',
+      options: {
+        hotspot: true,
+      },
     }),
     defineField({
       name: 'link',
-      title: 'Link URL',
+      title: 'External Media Link',
       type: 'url',
+      description: 'YouTube, Instagram, TikTok, Facebook, or other media links',
     }),
     defineField({
       name: 'caption',
@@ -31,6 +35,7 @@ export const gallerySchema = defineType({
       name: 'uploadDate',
       title: 'Upload Date',
       type: 'date',
+      description: 'Optional upload date',
     }),
     defineField({
       name: 'featured',

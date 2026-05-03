@@ -15,7 +15,7 @@ export const musicSchema = defineType({
       name: 'duration',
       title: 'Duration',
       type: 'string',
-      validation: Rule => Rule.required(),
+      description: 'Optional duration (e.g., "3:45")',
     }),
     defineField({
       name: 'artist',
@@ -25,8 +25,12 @@ export const musicSchema = defineType({
     }),
     defineField({
       name: 'coverImage',
-      title: 'Cover Image URL',
-      type: 'url',
+      title: 'Cover Image',
+      type: 'image',
+      description: 'Album or single cover image',
+      options: {
+        hotspot: true,
+      },
     }),
     defineField({
       name: 'embedUrl',
@@ -57,7 +61,7 @@ export const musicSchema = defineType({
       name: 'releaseDate',
       title: 'Release Date',
       type: 'date',
-      validation: Rule => Rule.required(),
+      description: 'Optional release date',
     }),
     defineField({
       name: 'latestRelease',

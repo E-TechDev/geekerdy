@@ -15,12 +15,12 @@ interface MusicItem {
   _id?: string;
   title: string;
   artist: string;
-  duration: string;
+  duration?: string;
   coverImage?: string;
   embedUrl: string;
   link?: string;
   platform: 'spotify' | 'boomplay' | 'youtube' | 'vimeo' | string;
-  releaseDate: string;
+  releaseDate?: string;
   featured: boolean;
   latestRelease?: boolean;
 }
@@ -28,13 +28,13 @@ interface MusicItem {
 interface VideoItem {
   _id?: string;
   title: string;
-  duration: string;
+  duration?: string;
   thumbnail?: string;
   embedUrl: string;
   link?: string;
   platform: string;
   category: string;
-  uploadDate: string;
+  uploadDate?: string;
   featured: boolean;
   latestRelease?: boolean;
 }
@@ -44,7 +44,7 @@ interface GalleryItem {
   title: string;
   image?: string;
   link?: string;
-  caption: string;
+  caption?: string;
   uploadDate?: string;
   featured: boolean;
 }
@@ -53,10 +53,10 @@ interface EventItem {
   _id?: string;
   title: string;
   venue: string;
-  date: string;
+  date?: string;
   location: string;
   ticketLink?: string;
-  description: string;
+  description?: string;
   image?: string;
   mediaUrl?: string;
   featured: boolean;
@@ -179,12 +179,11 @@ export default function AdminPage() {
       if (url) {
         // Replace preview with actual uploaded URL
         setItem({ ...currentItem, [fieldName]: url } as T);
-        URL.revokeObjectURL(previewUrl); // Clean up preview URL
+        URL.revokeObjectURL(previewUrl); // Clean up the temporary preview URL
       }
     } catch (error) {
       // On upload failure, keep the preview but show error
       console.error('Upload failed, keeping preview:', error);
-      URL.revokeObjectURL(previewUrl);
     }
   };
 
@@ -289,6 +288,22 @@ export default function AdminPage() {
       showStatus('Unable to load announcements.', 'error');
     }
   }, []);
+
+  // Auto-load all data when user logs in
+  useEffect(() => {
+    if (isLoggedIn) {
+      const loadAllData = async () => {
+        await Promise.all([
+          fetchMusic(),
+          fetchVideos(),
+          fetchGallery(),
+          fetchEvents(),
+          fetchAnnouncements(),
+        ]);
+      };
+      loadAllData();
+    }
+  }, [isLoggedIn, fetchMusic, fetchVideos, fetchGallery, fetchEvents, fetchAnnouncements]);
 
   // CRUD operations
   const saveMusic = async (item: MusicItem) => {
@@ -767,7 +782,9 @@ export default function AdminPage() {
                     <div>
                       <h4 className="font-semibold">{item.title}</h4>
                       <p className="text-sm text-gray-400">{item.artist} · {item.platform}</p>
-                      <p className="text-xs text-gray-500">Released {new Date(item.releaseDate).toLocaleDateString()}</p>
+                      {item.releaseDate && (
+                        <p className="text-xs text-gray-500">Released {new Date(item.releaseDate).toLocaleDateString()}</p>
+                      )}
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       <button
@@ -809,11 +826,10 @@ export default function AdminPage() {
                     />
                     <input
                       type="text"
-                      placeholder="Duration"
+                      placeholder="Duration (optional)"
                       value={editingMusic.duration}
                       onChange={(e) => setEditingMusic({ ...editingMusic, duration: e.target.value })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
-                      required
                     />
                     <input
                       type="url"
@@ -858,10 +874,9 @@ export default function AdminPage() {
                     </select>
                     <input
                       type="date"
-                      value={editingMusic.releaseDate}
-                      onChange={(e) => setEditingMusic({ ...editingMusic, releaseDate: e.target.value })}
+                      value={editingMusic.releaseDate || ''}
+                      onChange={(e) => setEditingMusic({ ...editingMusic, releaseDate: e.target.value || undefined })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
-                      required
                     />
                     <label className="flex items-center gap-2 text-sm text-gray-300">
                       <input
@@ -920,7 +935,7 @@ export default function AdminPage() {
                   <div key={item._id} className="bg-gray-800 p-4 rounded-lg flex justify-between items-center">
                     <div>
                       <h4 className="font-semibold">{item.title}</h4>
-                      <p className="text-sm text-gray-400">{item.venue} - {new Date(item.date).toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-400">{item.venue}{item.date ? ` - ${new Date(item.date).toLocaleDateString()}` : ''}</p>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -962,10 +977,9 @@ export default function AdminPage() {
                     />
                     <input
                       type="datetime-local"
-                      value={editingEvent.date}
-                      onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
+                      value={editingEvent.date || ''}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value || undefined })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
-                      required
                     />
                     <input
                       type="text"
@@ -1169,7 +1183,9 @@ export default function AdminPage() {
                     <div>
                       <h4 className="font-semibold">{item.title}</h4>
                       <p className="text-sm text-gray-400">{item.platform} · {item.category}</p>
-                      <p className="text-xs text-gray-500">Uploaded {new Date(item.uploadDate).toLocaleDateString()}</p>
+                      {item.uploadDate && (
+                        <p className="text-xs text-gray-500">Uploaded {new Date(item.uploadDate).toLocaleDateString()}</p>
+                      )}
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       <button
@@ -1254,18 +1270,16 @@ export default function AdminPage() {
                     </select>
                     <input
                       type="date"
-                      value={editingVideo.uploadDate}
-                      onChange={(e) => setEditingVideo({ ...editingVideo, uploadDate: e.target.value })}
+                      value={editingVideo.uploadDate || ''}
+                      onChange={(e) => setEditingVideo({ ...editingVideo, uploadDate: e.target.value || undefined })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
-                      required
                     />
                     <input
                       type="text"
-                      placeholder="Duration"
+                      placeholder="Duration (optional)"
                       value={editingVideo.duration}
                       onChange={(e) => setEditingVideo({ ...editingVideo, duration: e.target.value })}
                       className="px-3 py-2 bg-gray-700 border border-gray-600 rounded"
-                      required
                     />
                     <label className="flex items-center gap-2 text-sm text-gray-300">
                       <input
