@@ -48,8 +48,8 @@ export default function Navbar() {
               <motion.img
                 src={logoUrl}
                 alt="Gee Kerdy Logo"
-                className="h-8 w-8 object-contain"
-                whileHover={{ scale: 1.1 }}
+                className="h-10 w-10 object-contain"
+                whileHover={{ scale: 1.05 }}
               />
             )}
             <motion.div

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { trackClick } from '@/lib/analytics';
-import { homeSpotifyLink, homeBoomplayLink, homeSpotifyEmbed } from '@/lib/env';
+import { homeSpotifyLink, homeBoomplayLink, homeSpotifyEmbed, logoUrl } from '@/lib/env';
 import { client } from '@/lib/sanity';
 
 interface FeaturedMusic {
@@ -102,8 +102,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black">
-          <div className="absolute inset-0 opacity-20">
+<div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black pointer-events-none">
+            <div className="absolute inset-0 opacity-20 pointer-events-none">
             {heroDots.map((dot, i) => (
               <motion.div
                 key={i}
@@ -122,6 +122,16 @@ export default function HomePage() {
         </div>
 
         <div className="relative z-10 text-center px-4">
+          {logoUrl && (
+            <motion.img
+              src={logoUrl}
+              alt="Gee Kerdy Logo"
+              className="mx-auto mb-8 h-24 w-24 object-contain"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+            />
+          )}
           <motion.h1
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
