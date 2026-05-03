@@ -71,12 +71,8 @@ export default function HomePage() {
     const updateCountdowns = () => {
       const newCountdowns: Record<string, string> = {};
       const now = Date.now();
-      const activeAnnouncements = announcements.filter((announcement) => {
-        if (!announcement.expiresAt) return true;
-        return new Date(announcement.expiresAt).getTime() > now;
-      });
 
-      activeAnnouncements.forEach((announcement) => {
+      announcements.forEach((announcement) => {
         if (announcement.showCountdown && announcement.expiresAt) {
           const expires = new Date(announcement.expiresAt).getTime();
           const diff = expires - now;
@@ -90,8 +86,7 @@ export default function HomePage() {
         }
       });
 
-      setAnnouncements(activeAnnouncements);
-      window.setTimeout(() => setAnnouncementCountdowns(newCountdowns), 0);
+      setAnnouncementCountdowns(newCountdowns);
     };
 
     updateCountdowns();
@@ -101,13 +96,13 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <section className="relative h-screen flex items-center justify-center overflow-hidden pointer-events-auto">
+      <section className="relative h-screen overflow-hidden">
         <div className="absolute inset-0 z-0 pointer-events-none bg-gradient-to-br from-black via-gray-900 to-black">
           <div className="absolute inset-0 opacity-20 pointer-events-none">
             {heroDots.map((dot, i) => (
               <motion.div
                 key={i}
-                className="absolute w-1 h-1 bg-neon-green rounded-full"
+                className="absolute w-1 h-1 bg-neon-green rounded-full pointer-events-none"
                 style={{ left: dot.x, top: dot.y }}
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: [0, 1, 0], scale: [0, 1, 0] }}
@@ -121,44 +116,46 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="relative z-10 text-center px-4 pointer-events-auto">
-          <motion.h1
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            className="text-6xl md:text-8xl font-bold mb-4 glitch-text"
-            data-text="GEE KERDY"
-          >
-            GEE KERDY
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="text-xl md:text-2xl text-neon-green mb-8"
-          >
-            6IXTEEN FLAVOUR
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.4 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center pointer-events-auto"
-          >
-            <Link
-              href="/music"
-              className="bg-neon-green text-black px-8 py-3 rounded-full font-semibold hover:bg-opacity-80 transition-colors pointer-events-auto"
-              onClick={() => trackClick('spotify')}
+        <div className="relative z-10 flex items-center justify-center h-full">
+          <div className="text-center px-4">
+            <motion.h1
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1 }}
+              className="text-6xl md:text-8xl font-bold mb-4"
+              data-text="GEE KERDY"
             >
-              Stream Music
-            </Link>
-            <Link
-              href="/videos"
-              className="border border-neon-green text-neon-green px-8 py-3 rounded-full font-semibold hover:bg-neon-green hover:text-black transition-colors pointer-events-auto"
+              GEE KERDY
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.2 }}
+              className="text-xl md:text-2xl text-neon-green mb-8"
             >
-              Watch Videos
-            </Link>
-          </motion.div>
+              6IXTEEN FLAVOUR
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.4 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+            >
+              <Link
+                href="/music"
+                className="bg-neon-green text-black px-8 py-3 rounded-full font-semibold hover:bg-opacity-80 transition-colors"
+                onClick={() => trackClick('spotify')}
+              >
+                Stream Music
+              </Link>
+              <Link
+                href="/videos"
+                className="border border-neon-green text-neon-green px-8 py-3 rounded-full font-semibold hover:bg-neon-green hover:text-black transition-colors"
+              >
+                Watch Videos
+              </Link>
+            </motion.div>
+          </div>
         </div>
       </section>
 
