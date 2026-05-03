@@ -101,7 +101,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden pointer-events-auto">
         <div className="absolute inset-0 z-0 pointer-events-none bg-gradient-to-br from-black via-gray-900 to-black">
           <div className="absolute inset-0 opacity-20 pointer-events-none">
             {heroDots.map((dot, i) => (
@@ -143,18 +143,18 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            className="flex flex-col sm:flex-row gap-4 justify-center pointer-events-auto"
           >
             <Link
               href="/music"
-              className="bg-neon-green text-black px-8 py-3 rounded-full font-semibold hover:bg-opacity-80 transition-colors"
+              className="bg-neon-green text-black px-8 py-3 rounded-full font-semibold hover:bg-opacity-80 transition-colors pointer-events-auto"
               onClick={() => trackClick('spotify')}
             >
               Stream Music
             </Link>
             <Link
               href="/videos"
-              className="border border-neon-green text-neon-green px-8 py-3 rounded-full font-semibold hover:bg-neon-green hover:text-black transition-colors"
+              className="border border-neon-green text-neon-green px-8 py-3 rounded-full font-semibold hover:bg-neon-green hover:text-black transition-colors pointer-events-auto"
             >
               Watch Videos
             </Link>
