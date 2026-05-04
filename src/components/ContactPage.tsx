@@ -151,7 +151,6 @@ export default function ContactPage() {
                   <FaWhatsapp size={24} className="text-green-500" />
                   <div>
                     <div className="font-semibold">WhatsApp</div>
-                    <div className="text-gray-400">+{whatsappPhone}</div>
                   </div>
                 </a>
                 <a
