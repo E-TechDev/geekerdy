@@ -11,7 +11,7 @@ const milestones = [
 ];
 
 const stats = [
-  { label: 'Songs Released', value: '5' },
+  { label: 'Songs Released', value: '9' },
   { label: 'Streams', value: '5K+' },
   { label: 'Followers', value: '2.1K+' },
 ];
