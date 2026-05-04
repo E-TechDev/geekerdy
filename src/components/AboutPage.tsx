@@ -6,14 +6,14 @@ const milestones = [
   { year: '2020', event: 'Started music career' },
   { year: '2021', event: 'Released debut single' },
   { year: '2022', event: 'First major tour' },
-  { year: '2023', event: 'Album release' },
+  { year: '2023', event: 'Major releases' },
   { year: '2024', event: '6IXTEEN FLAVOUR era begins' },
 ];
 
 const stats = [
-  { label: 'Songs Released', value: '25+' },
-  { label: 'Streams', value: '10M+' },
-  { label: 'Followers', value: '500K+' },
+  { label: 'Songs Released', value: '5' },
+  { label: 'Streams', value: '5K+' },
+  { label: 'Followers', value: '2.1K+' },
 ];
 
 export default function AboutPage() {
